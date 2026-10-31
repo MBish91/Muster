@@ -1707,6 +1707,10 @@ async function aiKey(blob){
   const tryp=(px,py)=>{if(px<0||py<0||px>=S||py>=S)return;const k=py*S+px;if(seen[k])return;if(!near(k*4))return;seen[k]=1;st.push(k);};
   for(let i=0;i<S;i++){tryp(i,0);tryp(i,S-1);tryp(0,i);tryp(S-1,i);}
   while(st.length){const k=st.pop(),px=k%S,py=(k/S)|0;p[k*4+3]=0;tryp(px+1,py);tryp(px-1,py);tryp(px,py+1);tryp(px,py-1);}
+  const lum=o=>.3*p[o]+.59*p[o+1]+.11*p[o+2],sat=o=>Math.max(p[o],p[o+1],p[o+2])-Math.min(p[o],p[o+1],p[o+2]);
+  const loose=[];for(let k=0;k<S*S;k++)if(seen[k])loose.push(k);
+  while(loose.length){const k=loose.pop(),px=k%S,py=(k/S)|0;for(const [qx,qy] of [[px+1,py],[px-1,py],[px,py+1],[px,py-1]]){if(qx<0||qy<0||qx>=S||qy>=S)continue;const q=qy*S+qx;if(seen[q])continue;const o=q*4;if(sat(o)<34&&lum(o)>150){seen[q]=1;p[o+3]=0;loose.push(q);}}}
+  for(let k=0;k<S*S;k++){if(seen[k])continue;const o=k*4;if(lum(o)>238&&sat(o)<14){seen[k]=1;p[o+3]=0;}}
   let x0=S,y0=S,x1=0,y1=0,cnt=0;
   for(let py=0;py<S;py++)for(let px=0;px<S;px++){const k=py*S+px;if(seen[k])continue;
     const edge=seen[k-1]||seen[k+1]||seen[k-S]||seen[k+S];if(edge&&near(k*4))p[k*4+3]=90;else if(edge)p[k*4+3]=200;
