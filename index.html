@@ -1098,7 +1098,7 @@ function loadList(id){
 function unitArt(u){
   const star=u.parts.find(p=>p.warlord)||u.parts.find(p=>/Leader/.test(p.role))||u.parts[0];
   const withArt=[star,...u.parts].find(p=>artFor(p.lib));
-  return {star,art:withArt?artFor(withArt.lib):(star&&star.lib&&LIB[star.lib]?genArtFor(star.lib):null)};
+  return {star,art:(star&&star.lib&&LIB[star.lib]?genArtFor(star.lib):null)||(withArt?artFor(withArt.lib):null)};
 }
 function heroArt(u){
   const q=p=>p.qty||DS[p.key].qty||1;
@@ -1155,7 +1155,7 @@ const WORDMARK=`<svg class="wordmark" viewBox="0 0 300 70" role="img" aria-label
 
 const armyLabel=P=>P.factions.length?P.factions[P.factions.length-1].replace(/’/g,"'"):"Other";
 function listCover(P){
-  const pick=u=>{const ks=NAMEMAP[nrm(u.name)];if(ks)for(const k of ks)if(artFor(k))return artFor(k);const mm=MODELMAP[nrm(u.name)];if(mm)for(const m of u.models){const k=mm[nrm(m.name)];if(k&&artFor(k))return artFor(k);}if(ks)for(const k of ks)if(LIB[k])return genArtFor(k);return null;};
+  const pick=u=>{const ks=NAMEMAP[nrm(u.name)];if(ks)for(const k of ks)if(LIB[k])return genArtFor(k);if(ks)for(const k of ks)if(artFor(k))return artFor(k);const mm=MODELMAP[nrm(u.name)];if(mm)for(const m of u.models){const k=mm[nrm(m.name)];if(k&&artFor(k))return artFor(k);}if(ks)for(const k of ks)if(LIB[k])return genArtFor(k);return null;};
   const w=P.units.find(u=>u.warlord);return (w&&pick(w))||P.units.map(pick).find(Boolean)||null;}
 function listCheck(){
   const R=REPORT,ok=!R.missing.length&&!R.issues.length&&!R.detMissing.length&&!R.enhMissing.length;
@@ -1334,7 +1334,7 @@ function gPal(fac){
 }
 /* choose the figure that fits the unit */
 function gKind(L){
-  const n=(L&&L.name||"").toLowerCase(),k=((L&&L.keywords)||[]).map(x=>String(x).toLowerCase()).join(" ")+" "+((L&&L.fkw)||[]).map(x=>String(x).toLowerCase()).join(" ");
+  const fl=v=>(Array.isArray(v)?v.join(" "):String(v||"")).toLowerCase();const n=(L&&L.name||"").toLowerCase(),k=fl(L&&L.keywords)+" "+fl(L&&L.fkw);
   const has=r=>r.test(n)||r.test(k);
   if(has(/aircraft|\bfly\b/)&&has(/vehicle|aircraft/)&&!has(/dreadnought|walker/)&&has(/gunship|jetfighter|interceptor|dropship|thunderhawk|stormhawk|stormtalon|stormraven|talon|aircraft|astraeus|falchion|blackstar|nephilim|flyer/))return "flyer";
   if(has(/dreadnought|walker|redemptor|contemptor|ballistus|brutalis|invictor|helbrute|defiler|maulerfiend|forgefiend|castigator|knight|war dog|warsuit|titan|stompa|riptide|crisis|ghostkeel|battlesuit|sentinel|wraith|carnifex|hierophant/)&&!has(/guard sodality/))return "walker";
@@ -1544,7 +1544,8 @@ function needs(){
   const uniq=(u,i,a)=>a.findIndex(x=>nrm(x.name)===nrm(u.name))===i;
   return {P,label,units:P.units.filter((u,i,a)=>!resolved(u)&&uniq(u,i,a)),dets:P.dets.filter(d=>!DETR[nrm(d)]),fac:facOf(P)==="other"&&label?label:null};
 }
-function artNeeds(){const seen=new Set();return UNITS.filter(u=>{const {star}=unitArt(u);if(!star||artFor(star.lib))return false;const k=artKey(star.lib)||u.title;if(seen.has(k))return false;seen.add(k);return true;});}
+function artNeeds(){return [];}
+function artNeedsOld(){const seen=new Set();return UNITS.filter(u=>{const {star}=unitArt(u);if(!star||artFor(star.lib))return false;const k=artKey(star.lib)||u.title;if(seen.has(k))return false;seen.add(k);return true;});}
 function aiPanel(){
   const n=needs(),todo=n.units.length+n.dets.length+(n.fac?1:0),tn=textNeeds().length,qn=Object.keys(QUEUE).length,art=artNeeds();
   const desk=!!(SAMPLE&&MCP&&OWNER&&BROWSER_OK!==false);
