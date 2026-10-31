@@ -1445,7 +1445,7 @@ const PLIGHT={A:"a",T:"U",C:"E",D:"d"},PDARK={A:"b",T:"V",C:"H",D:"e"};
 function pFinish(g){
   const o=g.a.slice();
   for(let y=0;y<g.h;y++)for(let x=0;x<g.w;x++){const c=g.get(x,y);if(!PLIGHT[c])continue;
-    if(g.get(x,y-1)!==c)o[y*g.w+x]=PLIGHT[c];else if(g.get(x,y+1)!==c||g.get(x+1,y)!==c)o[y*g.w+x]=PDARK[c];}
+    if(g.get(x,y-1)!==c||(g.get(x-1,y-1)!==c&&g.get(x-1,y)!==c))o[y*g.w+x]=PLIGHT[c];else if(g.get(x,y+1)!==c||g.get(x+1,y)!==c||g.get(x,y+2)!==c&&(x+y)%2===0)o[y*g.w+x]=PDARK[c];}
   const r=o.slice();
   for(let y=0;y<g.h;y++)for(let x=0;x<g.w;x++){if(o[y*g.w+x])continue;
     if(g.get(x-1,y)||g.get(x+1,y)||g.get(x,y-1)||g.get(x,y+1))r[y*g.w+x]="K";}
@@ -1481,7 +1481,7 @@ function pHuman(g,ox,oy,o,s){
   if(o.servo){R(0,4,3,22,"D");R(-6,2,8,3,"D");R(-8,-2,3,6,"G");R(-7,22,5,3,"D");}
   R(b?8:10,26,b?7:5,14,"A");R(17,26,b?7:5,14,"A");R(8,40,9,4,"D");R(16,40,9,4,"D");R(b?8:10,32,b?7:5,2,"T");R(17,32,b?7:5,2,"T");
   if(b)R(5,10,22,17,"A");else R(9,10,14,16,"A");
-  R(14,13,5,7,"T");R(9,25,15,2,"T");R(15,15,3,3,"D");
+  R(14,13,5,7,"T");R(9,25,15,2,"T");R(15,15,3,3,"D");R(13,12,7,1,"U");R(15.5,16.5,2,1,"T");R(10,19,3,1,"e");R(10,21,3,1,"e");R(20,19,3,1,"e");R(20,21,3,1,"e");R(10,32.5,5,.5,"U");R(17,32.5,5,.5,"U");R(11,36,3,.5,"e");R(18,36,3,.5,"e");R(5.5,10.5,1,1,"U");R(9,10.5,1,1,"U");R(22.5,10.5,1,1,"U");R(26,10.5,1,1,"U");R(14,25.5,5,1,"D");
   if(o.skull){R(12,b?3:1,9,b?8:9,"B");R(14,b?6:4,2,2,"K");R(18,b?6:4,2,2,"K");R(14,b?9:7,5,1,"K");}
   else{R(12,b?3:1,9,b?8:9,"A");R(16,b?6:4,5,2,"G");}
   if(o.plume){R(10,-3,13,3,"T");R(6,-1,6,5,"T");}
@@ -1517,8 +1517,8 @@ function pVehicle(g,ox,oy,o,s){
   s=s||1;const R=(x,y,w,h,c)=>g.rect(ox+Math.round(x*s),oy+Math.round(y*s),Math.max(1,Math.round(w*s)),Math.max(1,Math.round(h*s)),c);
   const big=o.big,hov=o.hover;
   if(hov){R(4,25,64,3,"D");R(10,28,52,2,"G");R(18,30,36,1,"G");R(0,19,6,6,"D");R(66,19,6,6,"D");R(0,17,4,2,"G");}
-  else{R(0,21,72,12,"D");R(2,22,68,2,"d");for(let i=0;i<8;i++){R(6+i*8,26,6,6,"e");R(8+i*8,28,2,2,"d");}}
-  R(4,big?6:10,64,big?16:12,"A");R(0,17,72,5,"A");R(66,14,8,8,"A");R(70,17,3,5,"A");R(6,big?10:14,60,2,"T");
+  else{R(0,21,72,12,"D");R(2,22,68,2,"d");for(let i=0;i<8;i++){R(6+i*8,26,6,6,"e");R(8+i*8,28,2,2,"d");R(5+i*8,23,.5,1,"d");R(9+i*8,23,.5,1,"d");}}
+  R(4,big?6:10,64,big?16:12,"A");R(0,17,72,5,"A");R(66,14,8,8,"A");R(70,17,3,5,"A");R(6,big?10:14,60,2,"T");for(let i=0;i<15;i++)R(7+i*4,big?8.5:12.5,1,1,"U");R(8,big?16:19,6,2,"e");R(58,big?16:19,6,2,"e");R(34,big?16:19,4,3,"T");
   if(o.sponsons){R(10,big?4:8,10,7,"D");R(52,big?4:8,10,7,"D");R(20,big?5:9,10,2,"d");R(62,big?5:9,10,2,"d");}
   if(o.transport){R(14,4,38,8,"A");R(14,4,38,2,"T");R(24,0,8,5,"D");R(26,-2,12,2,"d");R(36,5,8,3,"G");R(50,2,10,2,"D");R(1,15,5,4,"G");}
   else{R(20,big?-2:2,28,big?12:11,"A");R(20,big?-2:2,28,2,"T");R(30,big?-5:-1,8,4,"D");
@@ -1540,24 +1540,24 @@ function pWalker(g,ox,oy,o,s){
   else{R(38,12,18,8,"D");R(56,13,4,5,"G");}
   if(o.missiles){R(20,-6,12,5,"D");R(22,-8,2,2,"F");R(28,-8,2,2,"F");}
 }
-function pFlyer(g,ox,oy,o){const R=(x,y,w,h,c)=>g.rect(ox+x,oy+y,w,h,c);
+function pFlyer(g,ox,oy,o,s){s=s||1;const R=(x,y,w,h,c)=>g.rect(ox+Math.round(x*s),oy+Math.round(y*s),Math.max(1,Math.round(w*s)),Math.max(1,Math.round(h*s)),c);
   R(4,12,52,7,"A");R(56,13,8,5,"A");R(64,14,5,3,"A");R(40,8,12,4,"G");R(4,12,52,2,"T");
   for(let i=0;i<9;i++)R(30-i*3,19+i,22,1,"A");R(10,22,22,3,"T");
   for(let i=0;i<8;i++)R(30-i*3,11-i,16,1,"A");
   R(0,0,8,14,"A");R(-2,8,8,4,"A");R(0,2,8,2,"T");
   R(-3,13,7,5,"D");R(-14,14,11,3,"F");R(-18,15,5,1,"X");
   R(26,26,8,3,"D");R(36,24,4,3,"D");R(44,20,12,2,"D");R(56,20,3,2,"G");}
-function pBeast(g,ox,oy,o){const R=(x,y,w,h,c)=>g.rect(ox+x,oy+y,w,h,c);
+function pBeast(g,ox,oy,o,s){s=s||1;const R=(x,y,w,h,c)=>g.rect(ox+Math.round(x*s),oy+Math.round(y*s),Math.max(1,Math.round(w*s)),Math.max(1,Math.round(h*s)),c);
   R(6,10,28,12,"A");R(6,10,28,2,"T");R(34,6,12,10,"A");R(44,10,6,5,"A");R(46,15,4,2,"B");R(38,3,3,4,"A");R(42,3,3,4,"A");R(41,8,3,2,"G");
   R(8,22,5,12,"A");R(15,22,5,12,"A");R(24,22,5,12,"A");R(31,22,5,12,"A");R(7,33,7,3,"D");R(30,33,7,3,"D");
   R(0,8,8,3,"A");R(-4,4,5,5,"A");R(48,14,3,2,"B");R(12,12,18,2,"T");}
-function pBike(g,ox,oy,o){
-  pHuman(g,ox+8,oy-12,{k:o.k,bulk:false,plume:o.plume,cape:false,w:o.w},.8);
-  const R=(x,y,w,h,c)=>g.rect(ox+x,oy+y,w,h,c);
-  g.disc(ox+10,oy+32,8,"D");g.disc(ox+10,oy+32,4,"e");g.disc(ox+54,oy+32,8,"D");g.disc(ox+54,oy+32,4,"e");
+function pBike(g,ox,oy,o,s){s=s||1;
+  pHuman(g,ox+Math.round(8*s),oy-Math.round(12*s),{k:o.k,bulk:false,plume:o.plume,cape:false,w:o.w},.8*s);
+  const R=(x,y,w,h,c)=>g.rect(ox+Math.round(x*s),oy+Math.round(y*s),Math.max(1,Math.round(w*s)),Math.max(1,Math.round(h*s)),c);
+  g.disc(ox+Math.round(10*s),oy+Math.round(32*s),Math.round(8*s),"D");g.disc(ox+Math.round(10*s),oy+Math.round(32*s),Math.round(4*s),"e");g.disc(ox+Math.round(54*s),oy+Math.round(32*s),Math.round(8*s),"D");g.disc(ox+Math.round(54*s),oy+Math.round(32*s),Math.round(4*s),"e");
   R(8,22,48,9,"A");R(8,22,48,2,"T");R(46,17,12,8,"A");R(56,19,6,3,"G");R(2,24,8,4,"D");R(12,20,12,3,"D");}
 /* ---- composition ---- */
-function pCompose(L,kind,g,cx,gy,s){
+function pCompose(L,kind,g,cx,gy,s){const K=2;
   const w=pWpn(L),n=String(L.name||"").toLowerCase(),k=(Array.isArray(L.keywords)?L.keywords.join(" "):String(L.keywords||"")).toLowerCase()+" "+((L.fkw||[]).join?(L.fkw||[]).join(" ").toLowerCase():"");
   const has=r=>r.test(n)||r.test(k);
   const meleeKind=["melee","hero","jump"].includes(kind);
@@ -1571,34 +1571,34 @@ function pCompose(L,kind,g,cx,gy,s){
   if(wk==="heavy"){o.shield=false;}
   if(["walker"].includes(kind)){
     const knight=has(/knight|war dog|warsuit|titan|stompa|hierophant|riptide/)&&!has(/battlesuit?s?$/)||/knight|war ?dog/.test(n);
-    pWalker(g,cx-24*(knight?1.4:1)/1,gy-44*(knight?1.4:1),{knight,leftFist:w.mn.some(x=>/fist|claw|talon|close combat|sword|blade/.test(x))&&!/sentinel|dreadnought.*(assault cannon)/.test(w.all)||has(/dreadnought/),hv:w.rn.some(x=>/cannon|las|missile|launcher|multi/.test(x))||has(/knight/),missiles:w.rn.some(x=>/missile|launcher|rocket/.test(x))},knight?1.4:1);return;}
+    pWalker(g,cx-24*(knight?1.4:1)*K,gy-44*(knight?1.4:1)*K,{knight,leftFist:w.mn.some(x=>/fist|claw|talon|close combat|sword|blade/.test(x))&&!/sentinel|dreadnought.*(assault cannon)/.test(w.all)||has(/dreadnought/),hv:w.rn.some(x=>/cannon|las|missile|launcher|multi/.test(x))||has(/knight/),missiles:w.rn.some(x=>/missile|launcher|rocket/.test(x))},(knight?1.4:1)*K);return;}
   if(kind==="tank"||kind==="hover"){
     const big=has(/land raider|baneblade|leman russ|crusader|redeemer|achilles|gladiator|castellan|executioner|spartan|vindicator|predator/),transport=has(/transport/)&&!has(/land raider/)||has(/rhino|razorback|impulsor|repulsor(?! exec)|chimera|termite|devilfish|wave ?serpent|venom|raider/)&&w.count<=2;
-    pVehicle(g,cx-36,gy-33,{big,hover:kind==="hover",transport:transport&&!has(/predator|vindicator|whirlwind|land raider/),sponsons:w.sponsons||has(/land raider|predator/),twin:w.twin},1);return;}
-  if(kind==="flyer"){pFlyer(g,cx-30,gy-30,o);return;}
-  if(kind==="beast"){pBeast(g,cx-24,gy-36,o);return;}
-  if(kind==="bike"){pBike(g,cx-32,gy-40,o);return;}
+    pVehicle(g,cx-36*K,gy-33*K,{big,hover:kind==="hover",transport:transport&&!has(/predator|vindicator|whirlwind|land raider/),sponsons:w.sponsons||has(/land raider|predator/),twin:w.twin},K);return;}
+  if(kind==="flyer"){pFlyer(g,cx-30*K,gy-30*K,o,K);return;}
+  if(kind==="beast"){pBeast(g,cx-24*K,gy-36*K,o,K);return;}
+  if(kind==="bike"){pBike(g,cx-32*K,gy-40*K,o,K);return;}
   const cnt=(kind==="hero"||has(/\bcharacter\b|epic hero/))?1:Math.max(pCount(L),(L.comp&&L.comp.length)?1:(has(/squad|brethren|sodality|veterans|company|guard|terminators|intercessors|marines|boyz|warriors|cultists|hounds|blades/)?3:1));
   const f=Math.min(3,cnt);
-  const hum=(x,y,sc)=>pHuman(g,x,y,o,sc);
-  if(f>=3){hum(cx-48,gy-50,1);hum(cx-4,gy-50,1);} else if(f===2){hum(cx-34,gy-50,1);}
-  hum(cx-18-(f>=3?-12:0),gy-(f>=2?44:44),1);
+  const hum=(x,y,sc)=>pHuman(g,x,y,o,sc*K);
+  if(f>=3){hum(cx-56*K,gy-52*K,1);hum(cx+6*K,gy-52*K,1);} else if(f===2){hum(cx-44*K,gy-52*K,1);}
+  hum(cx-(f>=3?22:f===2?6:18)*K,gy-44*K,1);
 }
 function pxScene(P,kind,L,seed){
-  const g=PG(120,80);pCompose(L,kind,g,68,73);const G=pFinish(g);
+  const g=PG(240,160);pCompose(L,kind,g,136,146);const G=pFinish(g);
   let s=seed*2654435761>>>0;const r=()=>((s=(s*1664525+1013904223)>>>0)/4294967296);
   let bg=`<rect width="900" height="600" fill="#${gMix(P.bg,"000000",.35)}"/>`;
   for(let i=0;i<10;i++){const y=i*60;bg+=`<rect y="${y}" width="900" height="60" fill="#${gMix(P.bg,P.trim,i/34)}" opacity="${(.5+i*.04).toFixed(2)}"/>`;}
-  for(let i=0;i<70;i++){const x=Math.floor(r()*150)*6,y=Math.floor(r()*88)*6,z=r()<.2?12:6;bg+=`<rect x="${x}" y="${y}" width="${z}" height="${z}" fill="#${r()<.6?P.glow:P.trim}" opacity="${(.1+r()*.45).toFixed(2)}"/>`;}
+  for(let i=0;i<150;i++){const x=Math.floor(r()*240)*3.75,y=Math.floor(r()*150)*3.75,z=r()<.2?7.5:3.75;bg+=`<rect x="${x}" y="${y}" width="${z}" height="${z}" fill="#${r()<.6?P.glow:P.trim}" opacity="${(.1+r()*.45).toFixed(2)}"/>`;}
   bg+=`<rect y="549" width="900" height="51" fill="#${gMix(P.bg,"000000",.6)}"/><rect y="540" width="900" height="9" fill="#${gMix(P.trim,"000000",.5)}"/>`;
   for(let i=0;i<30;i++)bg+=`<rect x="${Math.floor(r()*150)*6}" y="${552+Math.floor(r()*8)*6}" width="${6+Math.floor(r()*3)*6}" height="6" fill="#${gMix(P.bg,"ffffff",.1)}"/>`;
   bg+=`<rect width="900" height="600" fill="url(#vg)"/>`;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600" shape-rendering="crispEdges"><defs><linearGradient id="vg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".7"/><stop offset=".42" stop-color="#000" stop-opacity="0"/></linearGradient></defs>${bg}<g>${pSvg(G,P,7.5)}</g></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600" shape-rendering="crispEdges"><defs><linearGradient id="vg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".7"/><stop offset=".42" stop-color="#000" stop-opacity="0"/></linearGradient></defs>${bg}<g>${pSvg(G,P,3.75)}</g></svg>`;
 }
 function pxCut(P,kind,L){
-  const g=PG(120,80);pCompose(L,kind,g,68,73);const G=pFinish(g);
+  const g=PG(240,160);pCompose(L,kind,g,136,146);const G=pFinish(g);
   let x0=999,y0=999,x1=0,y1=0;for(let y=0;y<G.h;y++)for(let x=0;x<G.w;x++)if(G.a[y*G.w+x]){x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);}
-  const w=x1-x0+1,h=y1-y0+1,px=8;
+  const w=x1-x0+1,h=y1-y0+1,px=4;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w*px} ${h*px}" width="${w*px}" height="${h*px}" shape-rendering="crispEdges"><g transform="translate(${-x0*px} ${-y0*px})">${pSvg(G,P,px)}</g></svg>`;
 }
 
