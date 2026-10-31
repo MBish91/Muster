@@ -366,6 +366,7 @@ details[open]>summary .chev{transform:rotate(90deg)}
 .unit>summary.strip.noart{background:var(--stripG),linear-gradient(120deg,var(--head),#3a3a3a)}
 .hero.art.noart .kvw{background:var(--stripG),linear-gradient(120deg,var(--head),#3a3a3a)}
 .hero.art.noart .who{max-width:100%}
+.unit>summary.strip[style*="--ap"],.hero.art .kvw[style*="--ap"]{background:var(--stripG),var(--art) center 20%/100% auto no-repeat,#0d1418}
 .noart-note{margin:8px 0 0;font:600 12px var(--cond);letter-spacing:.06em;color:#cfd6d9;text-transform:uppercase}
 .doc.on b::after{content:"Active";margin-left:8px;padding:2px 7px;border-radius:var(--r-pill);background:var(--seal);color:#fff;font:600 11px var(--cond);letter-spacing:.06em;vertical-align:2px}
 
@@ -397,7 +398,7 @@ button.cg-h{width:100%;background:none;border:0;text-align:left;-webkit-appearan
 
 .lcard2{position:relative;margin:0 0 10px}
 .lopen{display:block;width:100%;text-align:left;border:0;cursor:pointer;color:#fff;padding:16px 50px 14px 16px;min-height:96px;border-radius:var(--r-md);box-shadow:var(--sh-2);
-  background:linear-gradient(90deg,rgba(8,6,12,.92) 0%,rgba(8,6,12,.6) 55%,rgba(8,6,12,.2) 100%),var(--art) center 30%/cover no-repeat,linear-gradient(120deg,#222,#444);border-bottom:3px solid var(--acc)}
+  background:linear-gradient(90deg,rgba(8,6,12,.92) 0%,rgba(8,6,12,.6) 55%,rgba(8,6,12,.2) 100%),var(--art) var(--ap,center 30%)/cover no-repeat,linear-gradient(120deg,#222,#444);border-bottom:3px solid var(--acc)}
 .lcard2[data-t="bt"] .lopen{border-bottom-color:#e0ac45}.lcard2[data-t="tau"] .lopen{border-bottom-color:#e0a24a}
 .lopen b{display:block;font:italic 800 22px/1.05 var(--cond);text-transform:uppercase}
 .lopen b span{padding:0 5px 0 1px;background:linear-gradient(transparent 58%,var(--st,rgba(196,31,40,.9)) 58%,var(--st,rgba(196,31,40,.9)) 92%,transparent 92%);text-shadow:2px 2px 0 #000}
@@ -1113,7 +1114,7 @@ function heroArt(u){
   const t=unitAttacks(u),shooty=META.fac==="tau";
   const st=[[models,"Models"],[wnds,"Wounds"],["T"+body.T,"Tough"],[body.Sv+(body.InSv?"/"+body.InSv:""),"Save"],[shooty?fmtT(t.R):fmtT(t.M),shooty?"Shots":"Melee"],[pts,"Pts",1]]
     .map(([v,l,h])=>`<div class="${h?"hl":""}"><b>${esc(String(v))}</b><small>${l}</small></div>`).join("");
-  return `<div class="hero art ${art&&art.w?"wide":""} ${art?"":"noart"}"><div class="kvw" ${art?`style="--art:url('${art.s}')"`:""}></div>${art&&art.c?`<img class="cutout" src="${art.c}" alt="${esc(u.title)}">`:""}
+  return `<div class="hero art ${art&&art.w?"wide":""} ${art?"":"noart"}"><div class="kvw" ${art?`style="--art:url('${art.s}')${art.ai?';--ap:center 20%':''}"`:""}></div>${art&&art.c?`<img class="cutout" src="${art.c}" alt="${esc(u.title)}">`:""}
   <div class="stage"><div class="who"><div class="pos"><b>${esc(tag)}</b>${detail?`<i>${esc(detail)}</i>`:""}</div>${crew?`<div class="crew">${crew}</div>`:""}${art?"":`<p class="noart-note">No artwork for this unit yet</p>`}</div></div>
   <div class="stats">${st}</div></div>`;
 }
@@ -1140,7 +1141,7 @@ function renderArmy(){
     const sub=u.parts.length>1?[...new Set(u.parts.map(p=>(p.role||"Unit").split(" ·")[0]))].join(" + "):(u.parts[0].role||"");
     const atk=(()=>{const t=unitAttacks(u);return `${fmtT(t.R)} <em>ranged</em> · ${fmtT(t.M)} <em>melee attacks</em>`})();
     const {art}=unitArt(u);
-    h+=`<details class="unit" data-u="${u.id}"><summary class="strip ${art?"":"noart"}" ${art?`style="--art:url('${art.s}')"`:""}><div class="nm"><b${u.title.length>20?' class="two"':""}><span>${esc(u.title)}</span></b></div><div class="pts">${pts}<small>PTS</small></div>${CHEV}</summary>${heroArt(u)}<div class="umeta"><span class="usub">${esc(u.tag&&!sub.includes(u.tag)?u.tag+" · "+sub:sub)}</span><span class="sumline">${atk}</span>${enhs.length?`<div class="seals">${enhs.map(x=>`<span class="sealtag">${esc(x)}</span>`).join("")}</div>`:""}</div>${atkBlock(u)}${u.parts.map((p,i)=>part(u,p,i)).join("")}</details>`;
+    h+=`<details class="unit" data-u="${u.id}"><summary class="strip ${art?"":"noart"}" ${art?`style="--art:url('${art.s}')${art.ai?';--ap:center 20%':''}"`:""}><div class="nm"><b${u.title.length>20?' class="two"':""}><span>${esc(u.title)}</span></b></div><div class="pts">${pts}<small>PTS</small></div>${CHEV}</summary>${heroArt(u)}<div class="umeta"><span class="usub">${esc(u.tag&&!sub.includes(u.tag)?u.tag+" · "+sub:sub)}</span><span class="sumline">${atk}</span>${enhs.length?`<div class="seals">${enhs.map(x=>`<span class="sealtag">${esc(x)}</span>`).join("")}</div>`:""}</div>${atkBlock(u)}${u.parts.map((p,i)=>part(u,p,i)).join("")}</details>`;
     sec.h+=h;
   });
   secs.forEach(s=>{h+=cgroup(`a:${LISTS.active}:${s.g}`,"sect",`<span>${esc(s.g)}</span>`,s.h,`${s.n} unit${s.n>1?"s":""} · ${s.pts.toLocaleString("en-GB")} pts`);});
@@ -1180,7 +1181,7 @@ function renderHome(){
     let b="";
     groups[g].forEach(({L,P})=>{const art=listCover(P);
       b+=`<div class="lcard2" data-t="${theme}">
-        <button class="lopen" data-open="${L.id}" ${art?`style="--art:url('${art.s}')"`:""}><b><span>${esc(P.name)}</span></b><small>${esc([P.pts?P.pts.toLocaleString("en-GB")+" pts":"",P.dets.join(", "),P.mission].filter(Boolean).join(" · "))}</small><i>${(n=>n+" unit"+(n===1?"":"s"))(new Set(P.units.map((u,i)=>u.att?"a"+u.att:"s"+i)).size)}</i></button>
+        <button class="lopen" data-open="${L.id}" ${art?`style="--art:url('${art.s}')${art.ai?';--ap:center 20%':''}"`:""}><b><span>${esc(P.name)}</span></b><small>${esc([P.pts?P.pts.toLocaleString("en-GB")+" pts":"",P.dets.join(", "),P.mission].filter(Boolean).join(" · "))}</small><i>${(n=>n+" unit"+(n===1?"":"s"))(new Set(P.units.map((u,i)=>u.att?"a"+u.att:"s"+i)).size)}</i></button>
         <button class="lfav ${L.fav?"on":""}" data-fav="${L.id}" aria-label="${L.fav?"Unpin":"Pin"} ${esc(P.name)}" aria-pressed="${!!L.fav}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg></button><button class="ldel" data-dellist="${L.id}" aria-label="Delete ${esc(P.name)}">✕</button></div>`;});
     h+=cgroup("h:"+g,"sect army-h",`<span class="mini">${CREST[theme]}</span><span>${esc(g)}</span> <small>${groups[g].length} list${groups[g].length>1?"s":""}</small>`,b,"");
   });
