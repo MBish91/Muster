@@ -1883,7 +1883,7 @@ if(window.claude&&claude.use)initCaps();
 const CFG=window.MUSTER_SB;if(!CFG||!CFG.url||!CFG.key||(window.claude&&claude.use))return;
 const U=CFG.url.replace(/\/$/,""),K=CFG.key;let SES=null,SKIP=false;
 try{SES=JSON.parse(localStorage.getItem("muster-sb")||"null");SKIP=localStorage.getItem("muster-sb-skip")==="1";}catch(e){}
-const hd=t=>({apikey:K,"Content-Type":"application/json",Authorization:"Bearer "+(t||K)});
+const hd=t=>{const h={apikey:K,"Content-Type":"application/json"};if(t)h.Authorization="Bearer "+t;return h;};
 async function auth(path,body){const r=await fetch(U+"/auth/v1/"+path,{method:"POST",headers:hd(),body:JSON.stringify(body)});let j={};try{j=await r.json();}catch(e){}
   if(!r.ok)throw new Error(j.error_description||j.msg||j.message||"Sign-in failed");return j;}
 function keep(j){SES={access:j.access_token,refresh:j.refresh_token,exp:Date.now()+((j.expires_in||3600)-60)*1000,uid:(j.user&&j.user.id)||(SES&&SES.uid),email:(j.user&&j.user.email)||(SES&&SES.email)};
