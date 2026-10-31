@@ -1618,6 +1618,7 @@ function aiHue(h){h=gHex(h,"444444");const n=parseInt(h,16),r=n>>16&255,g=n>>8&2
   return H<20||H>=340?"crimson red":H<45?"orange":H<70?"gold":H<160?"green":H<200?"teal":H<255?"blue":H<300?"purple":"magenta";}
 /* silhouette library: generic visual descriptions by unit role (no brand names), chosen from the datasheet's keywords and name */
 function aiSil(L,kind,has,w,cnt){
+  const BP="a bulky rectangular power-pack backpack with twin exhaust vents and glowing cables on the back",PA="in thick bulky powered ceramite battle armour with huge rounded shoulder pauldrons, a ribbed bodysuit at the joints, armoured gauntlets and greaves, a sealed helmet with a narrow glowing eye-lens and a mouth vox-grille";
   const mk=(subject,solo,pose)=>({subject,solo:!!solo,pose:pose||""});
   /* --- colossal / titanic --- */
   if(has(/stormsurge|titanic|towering|warlord titan|reaver|warhound|stompa|hierophant|baneblade/)&&kind!=="flyer")
@@ -1670,18 +1671,18 @@ function aiSil(L,kind,has,w,cnt){
     if(has(/apothecary/))return mk("a single armoured field-surgeon in power armour with a white helm, a backpack of medical tools and a long reductor injector in one hand and a pistol in the other",1);
     if(has(/ancient|standard|banner/))return mk("a single armoured standard-bearer carrying an enormous tattered battle banner on a tall pole, flames licking the cloth",1,"low heroic angle");
     if(has(/terminator/))return mk("a single heroic armoured commander in massive bulky heavy armour with big square shoulder plates, a small crested helm and a huge two-handed fist weapon",1);
-    if(has(/marshal|chapter master|commander|captain|lord|champion|castellan|prince/))return mk("a single heroic armoured commander in ornate power armour with a tall crested helm, a long flowing cloak and a sword raised in one hand and a pistol in the other",1,"low heroic angle");
-    return mk("a single heroic armoured warrior in ornate power armour with a long cloak",1,"low heroic angle");
+    if(has(/marshal|chapter master|commander|captain|lord|champion|castellan|prince/))return mk(`a single heroic super-soldier commander ${PA}, with ornate gold-trimmed armour, a tall crested helm, a long flowing cloak, ${BP}, a power sword raised in one hand and a bolt pistol in the other`,1,"low heroic angle");
+    return mk(`a single heroic super-soldier ${PA}, with ${BP} and a long cloak`,1,"low heroic angle");
   }
   /* --- infantry squads --- */
   const n3=cnt>1?"three":"one";
-  if(has(/terminator|deathwing/))return mk(`${n3} hulking heavily armoured warrior${cnt>1?"s":""} in massive bulky heavy armour with huge square shoulder plates and small helmets`,0,cnt>1?"standing shoulder to shoulder":"");
-  if(has(/gravis|eradicator|aggressor|heavy intercessor|centurion/))return mk(`${n3} extra-large bulky armoured warrior${cnt>1?"s":""} in thick heavy battle armour with oversized shoulder plates`,0);
-  if(has(/jump pack|inceptor|assault/)&&has(/fly|jump/))return mk(`${n3} armoured assault trooper${cnt>1?"s":""} with roaring jump packs leaping through the air`,0);
-  if(has(/bladeguard/))return mk(`${n3} armoured elite sword-warrior${cnt>1?"s":""} in ornate power armour with plumed helms, each carrying a glowing sword and a large storm shield`,0);
+  if(has(/terminator|deathwing/))return mk(`${n3} hulking super-soldier${cnt>1?"s":""} in massive bulky heavy ceramite armour with huge square shoulder plates, a thick chest plate, small helmets and a tall armoured power-pack on the back`,0,cnt>1?"standing shoulder to shoulder":"");
+  if(has(/gravis|eradicator|aggressor|heavy intercessor|centurion/))return mk(`${n3} extra-large towering super-soldier${cnt>1?"s":""} in the heaviest bulky ceramite armour with oversized pauldrons, a thick armoured chest plate, ${BP} and heavy weapons`,0);
+  if(has(/jump pack|inceptor|assault/)&&has(/fly|jump/))return mk(`${n3} super-soldier${cnt>1?"s":""} ${PA}, wearing a large winged jump pack with roaring thruster flames on the back, leaping through the air with a chainsword and pistol`,0);
+  if(has(/bladeguard/))return mk(`${n3} elite super-soldier${cnt>1?"s":""} ${PA}, with ornate plumed helms and ${BP}, each carrying a glowing power sword and a large storm shield`,0);
   if(has(/scout|infiltrator|incursor|reiver|outrider/))return mk(`${n3} lightly armoured stealthy soldier${cnt>1?"s":""} with camouflage cloaks and dark combat masks`,0);
   if(has(/berzerker|khorne|world eaters|blood|bloodletter/))return mk(`${n3} frenzied horned armoured warrior${cnt>1?"s":""} in blood-red spiked armour with screaming helms and cruel jagged chain-axes`,0,"charging");
-  return mk(`${n3} armoured soldier${cnt>1?"s":""} in heavy power armour with domed helmets`,0,cnt>1?"advancing in formation":"");
+  return mk(`${n3} genetically-enhanced super-soldier${cnt>1?"s":""} ${PA}, each carrying a boxy bolt rifle with a top-mounted magazine and wearing ${BP}, a stern chapter icon on one pauldron and a purity-seal scroll hanging from the armour`,0,cnt>1?"advancing in formation, seen from a three-quarter angle so the backpacks show":"seen from a three-quarter back angle so the backpack shows");
 }
 function aiPrompt(L,P,kind){
   const w=pWpn(L),arm=aiHue(P.h||P.arm),tr=aiHue(P.s||P.trim),n=String(L.name||"").toLowerCase(),
