@@ -1194,7 +1194,7 @@ const LEADOK={brute:1,chaos:1,gold:1,marine:1,nun:1,plague:1,robot:1,seer:1,swar
 const FACE={pool:[],i:0,t:null};
 function leaderPool(groups){
   const seen=new Set(),out=[];const add=(src,army)=>{if(src&&!seen.has(src)){seen.add(src);out.push({src,army});}};
-  Object.keys(groups||{}).forEach(g=>groups[g].forEach(({P})=>{const a=listCover(P);if(a&&a.ai)add(a.s,g);else if(a&&a.c&&!a.w&&!AIART.url)add(a.c,g);}));
+  Object.keys(groups||{}).forEach(g=>groups[g].forEach(({P})=>{const a=listCover(P);if(a&&a.ai)add(a.c||a.s,g);else if(a&&a.c&&!a.w&&!AIART.url)add(a.c,g);}));
   if(AIART.url){GEN_BRAND.forEach((_,i)=>{const u=aiBrand(i);if(u)add(u,"Muster"+i);});}else GEN_BRAND.forEach((_,i)=>add(brandFig(i),"Muster"+i));
   return out;
 }
@@ -1204,7 +1204,7 @@ function nextPair(){const P=FACE.pool;if(P.length<2)return null;
 function faceoff(){
   clearTimeout(FACE.t);const L=document.querySelector(".arena .fl"),R=document.querySelector(".arena .fr"),V=document.querySelector(".arena .vs");
   if(!L||LISTS.view!=="home")return;const pr=nextPair();if(!pr)return;
-  const pc=s=>/^blob:/.test(s)?' class="pt"':"";const show=()=>{L.innerHTML=`<img${pc(pr[0].src)} src="${pr[0].src}" alt="">`;R.innerHTML=`<img${pc(pr[1].src)} src="${pr[1].src}" alt="">`;
+  const pc=s=>/^blob:/.test(s)&&!AIART.cutSet.has(s)?' class="pt"':"";const show=()=>{L.innerHTML=`<img${pc(pr[0].src)} src="${pr[0].src}" alt="">`;R.innerHTML=`<img${pc(pr[1].src)} src="${pr[1].src}" alt="">`;
     [L,R,V].forEach(x=>{x.classList.remove("out");x.classList.remove("in");void x.offsetWidth;x.classList.add("in");});};
   if(L.firstChild&&!RM.matches){[L,R,V].forEach(x=>{x.classList.remove("in");x.classList.add("out");});setTimeout(show,420);}else show();
   FACE.t=setTimeout(faceoff,RM.matches?6000:3600);
@@ -1610,7 +1610,7 @@ function pxCut(P,kind,L){
 }
 
 /* ---------- painted art from the user's free Cloudflare worker; pixel art shows until each picture arrives ---------- */
-const AIART={url:(window.MUSTER_SB&&window.MUSTER_SB.art)||"",ready:{},busy:{},q:[],run:0,t:null};
+const AIART={cutSet:new Set(),url:(window.MUSTER_SB&&window.MUSTER_SB.art)||"",ready:{},busy:{},q:[],run:0,t:null};
 function aiHue(h){h=gHex(h,"444444");const n=parseInt(h,16),r=n>>16&255,g=n>>8&255,b=n&255,mx=Math.max(r,g,b),mn=Math.min(r,g,b);
   if(mx<60)return "black";if(mx-mn<28)return mx>190?"white":mx>110?"grey":"dark grey";
   let H;if(mx===r)H=((g-b)/(mx-mn)+6)%6;else if(mx===g)H=(b-r)/(mx-mn)+2;else H=(r-g)/(mx-mn)+4;H*=60;
@@ -1697,25 +1697,46 @@ function aiPrompt(L,P,kind){
   const style="gothic grimdark far-future sci-fi oil painting, ornate skulls, eagles and purity seals, dramatic rim lighting, smoke and embers, painterly concept art, no text, no logo";
   return `${S.subject}${gear?", carrying "+gear:""}, ${livery}${S.pose?", "+S.pose:""}${lone}${novehic}, on a dark ruined battlefield, ${style}`;
 }
+async function aiKey(blob){
+  const bm=await createImageBitmap(blob),S=512,c=document.createElement("canvas");c.width=c.height=S;
+  const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(bm,0,0,S,S);
+  const d=x.getImageData(0,0,S,S),p=d.data;let r=0,g=0,b=0,n=0;
+  for(let i=0;i<S;i++)for(const q of [[i,0],[i,S-1],[0,i],[S-1,i]]){const o=(q[1]*S+q[0])*4;r+=p[o];g+=p[o+1];b+=p[o+2];n++;}
+  r/=n;g/=n;b/=n;const near=o=>Math.abs(p[o]-r)+Math.abs(p[o+1]-g)+Math.abs(p[o+2]-b)<80;
+  const seen=new Uint8Array(S*S),st=[];
+  const tryp=(px,py)=>{if(px<0||py<0||px>=S||py>=S)return;const k=py*S+px;if(seen[k])return;if(!near(k*4))return;seen[k]=1;st.push(k);};
+  for(let i=0;i<S;i++){tryp(i,0);tryp(i,S-1);tryp(0,i);tryp(S-1,i);}
+  while(st.length){const k=st.pop(),px=k%S,py=(k/S)|0;p[k*4+3]=0;tryp(px+1,py);tryp(px-1,py);tryp(px,py+1);tryp(px,py-1);}
+  let x0=S,y0=S,x1=0,y1=0,cnt=0;
+  for(let py=0;py<S;py++)for(let px=0;px<S;px++){const k=py*S+px;if(seen[k])continue;
+    const edge=seen[k-1]||seen[k+1]||seen[k-S]||seen[k+S];if(edge&&near(k*4))p[k*4+3]=90;else if(edge)p[k*4+3]=200;
+    cnt++;if(px<x0)x0=px;if(px>x1)x1=px;if(py<y0)y0=py;if(py>y1)y1=py;}
+  if(cnt<S*S*.12||cnt>S*S*.9)return null;
+  x.putImageData(d,0,0);const w=x1-x0+1,h=y1-y0+1,o=document.createElement("canvas");o.width=w;o.height=h;
+  o.getContext("2d").drawImage(c,x0,y0,w,h,0,0,w,h);
+  return await new Promise(res=>o.toBlob(res,"image/png"));
+}
+function aiCutPrompt(L,P,kind){return aiPrompt(L,P,kind).replace(/, on a dark ruined battlefield,.*$/,"")+", full body, isolated on a plain flat pure white studio background, no scenery, no ground, no floor shadow, even lighting, gothic grimdark far-future sci-fi oil painting, painterly concept art, no text, no logo";}
 function aiPump(){while(AIART.run<3&&AIART.q.length){const j=AIART.q.shift();AIART.run++;
   (async()=>{try{
     const c=await caches.open("muster-ai-art");let r=await c.match(j.u);
     if(!r){r=await fetch(j.u);if(!r.ok)throw 0;await c.put(j.u,r.clone());}
-    AIART.ready[j.k]=URL.createObjectURL(await r.blob());
+    let bl=await r.blob();if(j.cut){bl=await aiKey(bl);if(!bl)throw 0;}
+    const ou=URL.createObjectURL(bl);AIART.ready[j.k]=ou;if(j.cut)AIART.cutSet.add(ou);
     clearTimeout(AIART.t);AIART.t=setTimeout(()=>{try{if(LISTS.view==="home"){renderHome();clearTimeout(FACE.t);setTimeout(faceoff,60);}else renderAll();}catch(e){}},400);
   }catch(e){delete AIART.busy[j.k];}finally{AIART.run--;aiPump();}})();}}
 const _genArtFor=genArtFor;
 genArtFor=function(lib){
   const o=_genArtFor(lib);if(!o||!AIART.url)return o;
   const L=LIB[lib];if(!L)return o;
-  const fac=GENCTX.fac||((WH.bySlug[L.whFac]||{}).colors)||null,k=lib+"|"+JSON.stringify(fac||{});
-  if(AIART.ready[k])return {...o,s:AIART.ready[k],c:null,w:true,ai:true};
-  if(!AIART.busy[k]){AIART.busy[k]=1;const P=gPal(fac);
-    AIART.q.push({k,u:AIART.url+(AIART.url.includes("?")?"&":"?")+"p="+encodeURIComponent(aiPrompt(L,P,o.kind))});aiPump();}
+  const fac=GENCTX.fac||((WH.bySlug[L.whFac]||{}).colors)||null,k=lib+"|"+JSON.stringify(fac||{}),kc=k+"#cut",P=gPal(fac);
+  const q=(key,prompt,cut)=>{if(AIART.busy[key])return;AIART.busy[key]=1;AIART.q.push({k:key,cut,u:AIART.url+(AIART.url.includes("?")?"&":"?")+"p="+encodeURIComponent(prompt)});aiPump();};
+  q(k,aiPrompt(L,P,o.kind),false);q(kc,aiCutPrompt(L,P,o.kind),true);
+  if(AIART.ready[k])return {...o,s:AIART.ready[k],c:AIART.ready[kc]||null,w:true,ai:true};
   return o;};
 const BRAND_P=["a heroic armoured commander in ornate blue power armour raising a glowing power sword","a hulking bulky armoured veteran in black and white armour with a storm shield and hammer","an armoured assault trooper in red armour with a jump pack leaping forward","a horned warrior in spiked crimson and brass armour with a roaring chainaxe","an armoured marksman in green camouflaged armour aiming a long rifle","a towering armoured combat walker with a cannon arm and a clawed fist"];
 function aiBrand(i){if(!AIART.url)return null;const k="brand"+i;if(AIART.ready[k])return AIART.ready[k];
-  if(!AIART.busy[k]){AIART.busy[k]=1;AIART.q.push({k,u:AIART.url+"?p="+encodeURIComponent("epic dark sci-fi oil painting character portrait, "+BRAND_P[i%BRAND_P.length]+", dramatic rim lighting, dark smoky background, painterly concept art, centred, no text, no logo")});aiPump();}return null;}
+  if(!AIART.busy[k]){AIART.busy[k]=1;AIART.q.push({k,cut:true,u:AIART.url+"?p="+encodeURIComponent("gothic grimdark far-future sci-fi oil painting, full body, "+BRAND_P[i%BRAND_P.length]+", isolated on a plain flat pure white studio background, no scenery, no ground, no floor shadow, even lighting, painterly concept art, no text, no logo")});aiPump();}return null;}
 
 /* ---------- AI LIBRARY (Claude drafts + shared store) ---------- */
 const slug=s=>nrm(s).replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,80)||"x";
