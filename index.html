@@ -1332,13 +1332,14 @@ function gPal(fac){
   return {bg:gMix(head,"000000",.55),arm,armD:gMix(arm,"000000",.55),armL:gMix(arm,"ffffff",.28),trim:gLum(stripe)<.25?gMix(stripe,"e0ac45",.6):stripe,glow:gMix(stripe,"ffb347",.55),acc};
 }
 /* choose the figure that fits the unit */
-function gKind(L){
+function gKind(L){const _k=gKind0(L);return _k;}
+function gKind0(L){
   const fl=v=>(Array.isArray(v)?v.join(" "):String(v||"")).toLowerCase();const n=(L&&L.name||"").toLowerCase(),k=fl(L&&L.keywords)+" "+fl(L&&L.fkw);
-  const has=r=>r.test(n)||r.test(k);
+  const has=r=>r.test(n)||r.test(k);const inf=/\binfantry\b/.test(k)&&!/\bvehicle\b/.test(k);
   if(has(/aircraft|\bfly\b/)&&has(/vehicle|aircraft/)&&!has(/dreadnought|walker/)&&has(/gunship|jetfighter|interceptor|dropship|thunderhawk|stormhawk|stormtalon|stormraven|talon|aircraft|astraeus|falchion|blackstar|nephilim|flyer/))return "flyer";
   if(has(/dreadnought|walker|redemptor|contemptor|ballistus|brutalis|invictor|helbrute|defiler|maulerfiend|forgefiend|castigator|knight|war dog|warsuit|titan|stompa|riptide|crisis|ghostkeel|battlesuit|sentinel|wraith|carnifex|hierophant/)&&!has(/guard sodality/))return "walker";
-  if(has(/land speeder|storm speeder|repulsor|gladiator|grav|caladius|coronus|pallas|hover|skimmer|hammerhead|devilfish|waveserpent|falcon|venom|raider(?!.*land)|ravager|void/))return "hover";
-  if(has(/vehicle|transport|tank|rhino|razorback|predator|vindicator|whirlwind|land raider|sicaran|kratos|typhon|cerberus|termite|drop pod|bunker|battery|carrier|impulsor|baneblade|leman|chimera|hellhound|basilisk/))return "tank";
+  if(!inf&&has(/land speeder|storm speeder|repulsor|impulsor|gladiator|\bgrav-|caladius|coronus|pallas|hover|skimmer|hammerhead|devilfish|waveserpent|falcon|venom|ravager|void ray/))return "hover";
+  if(!inf&&has(/vehicle|tank|rhino|razorback|predator|vindicator|whirlwind|land raider|sicaran|kratos|typhon|cerberus|termite|drop pod|bunker|battery|carrier|impulsor|baneblade|leman|chimera|hellhound|basilisk/))return "tank";
   if(has(/\bbike|jetbike|outrider|attack bike|atv|cavalry|ravenwing|knight|mounted/)&&!has(/guard|terminator/))return "bike";
   if(has(/wolves|wolf pack|wulfen|thunderwolf|hounds|beasts|\bbeast\b|monster|carnifex|nurglings|swarm/))return has(/thunderwolf/)?"bike":"beast";
   if(has(/jump pack|jump packs|\bjump\b|assault intercessors with|inceptor|vanguard veteran squad with|chaplain with|captain with|reiver.*grav/))return "jump";
@@ -1424,14 +1425,182 @@ function genArtFor(lib){
   const P=gPal(fac),kind=gKind(L);let seed=0;for(const ch of lib)seed=(seed*31+ch.charCodeAt(0))>>>0;
   const uri=svg=>"data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);
   const wide=["tank","hover","flyer","walker","beast","bike"].includes(kind);
-  return GEN.cache[key]={s:uri(gSvgScene(P,kind,seed)),c:uri(gSvgCut(P,kind,seed)),w:wide||kind==="walker",gen:true,kind};
+  return GEN.cache[key]={s:uri(pxScene(P,kind,L,seed)),c:uri(pxCut(P,kind,L)),w:wide||kind==="walker",gen:true,kind};
 }
 
 /* branding figures: fixed generated set */
 const GEN_BRAND=[["hero","1d3a8a","e0ac45"],["heavy","7a1616","c9a64a"],["jump","1f5a3a","d9d2b0"],["melee","5a2a6e","e0ac45"],["rifle","8a6a1a","fff3c4"],["hero","3a3a44","a51c1c"]];
 function brandFig(i,flip){const [k,h,s]=GEN_BRAND[i%GEN_BRAND.length];const P=gPal({header:"#"+h,stripe:"#"+s});
-  return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(gSvgCut(P,k,i+3));}
+  const L={name:["Captain","Terminator","Jump","Berzerker","Intercessor","Lord"][i%6],keywords:"",ranged:[{n:"Bolt rifle"}],melee:[{n:["Power sword","Power fist","Chainsword","Chainaxe","Hammer","Power sword"][i%6]}],comp:[]};
+  return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(pxCut(P,k,L));}
 const BRAND_BG="radial-gradient(circle at 25% 80%,rgba(255,110,40,.28),transparent 45%),radial-gradient(circle at 80% 70%,rgba(255,170,60,.2),transparent 42%),radial-gradient(circle at 50% 20%,rgba(120,30,30,.35),transparent 55%),#0b0907";
+
+/* ---------- pixel-art sprites: built from each datasheet's own weapons, keywords and squad size ---------- */
+function PG(w,h){const g={w,h,a:new Array(w*h).fill("")};
+  g.set=(x,y,c)=>{x=Math.round(x);y=Math.round(y);if(x>=0&&y>=0&&x<w&&y<h)g.a[y*w+x]=c;};
+  g.rect=(x,y,ww,hh,c)=>{for(let j=0;j<hh;j++)for(let i=0;i<ww;i++)g.set(x+i,y+j,c);};
+  g.disc=(cx,cy,r,c)=>{for(let j=-r;j<=r;j++)for(let i=-r;i<=r;i++)if(i*i+j*j<=r*r+r*.6)g.set(cx+i,cy+j,c);};
+  g.get=(x,y)=>x<0||y<0||x>=w||y>=h?"":g.a[y*w+x];return g;}
+const PLIGHT={A:"a",T:"U",C:"E",D:"d"},PDARK={A:"b",T:"V",C:"H",D:"e"};
+function pFinish(g){
+  const o=g.a.slice();
+  for(let y=0;y<g.h;y++)for(let x=0;x<g.w;x++){const c=g.get(x,y);if(!PLIGHT[c])continue;
+    if(g.get(x,y-1)!==c)o[y*g.w+x]=PLIGHT[c];else if(g.get(x,y+1)!==c||g.get(x+1,y)!==c)o[y*g.w+x]=PDARK[c];}
+  const r=o.slice();
+  for(let y=0;y<g.h;y++)for(let x=0;x<g.w;x++){if(o[y*g.w+x])continue;
+    if(g.get(x-1,y)||g.get(x+1,y)||g.get(x,y-1)||g.get(x,y+1))r[y*g.w+x]="K";}
+  return {w:g.w,h:g.h,a:r};
+}
+function pColors(P){const m=(a,b,t)=>"#"+gMix(a,b,t),h=x=>"#"+x;
+  return {A:h(P.arm),a:m(P.arm,"ffffff",.3),b:m(P.arm,"000000",.45),T:h(P.trim),U:m(P.trim,"ffffff",.4),V:m(P.trim,"000000",.5),
+    C:m(P.trim,"000000",.55),E:m(P.trim,"000000",.4),H:m(P.trim,"000000",.7),D:"#3a3a46",d:"#6c6c7c",e:"#202028",G:h(P.glow),W:"#eef3f8",F:"#ff8a1e",X:"#ffe27a",K:"#08080c",B:"#e6dcc6",P:"#7fd0ff"};}
+function pSvg(G,P,px,vb){const C=pColors(P);let s="";
+  for(let y=0;y<G.h;y++){let x=0;while(x<G.w){const c=G.a[y*G.w+x];if(!c){x++;continue;}let n=1;while(x+n<G.w&&G.a[y*G.w+x+n]===c)n++;s+=`<rect x="${x*px}" y="${y*px}" width="${n*px}" height="${px}" fill="${C[c]||"#f0f"}"/>`;x+=n;}}
+  return s;}
+/* ---- loadout reading ---- */
+function pWpn(L){
+  const rg=(L.ranged||[]),ml=(L.melee||[]);const nm=a=>a.map(w=>String(w.n||"").toLowerCase());
+  const rn=nm(rg),mn=nm(ml),all=rn.concat(mn).join(" | ");
+  const cls=n=>/plasma|volkite/.test(n)?"plasma":/flamer|incinerator|torrent|burner/.test(n)?"flamer":/melta|fusion|multi-melta|thermal/.test(n)?"melta":/lascannon|missile|launcher|battle cannon|autocannon|heavy bolter|assault cannon|gatling|multi|cyclone|railgun|neutron|conversion|hellstorm|twin|las-?|rocket|vulcan|macro/.test(n)?"heavy":/pistol/.test(n)?"pistol":"rifle";
+  const mcls=n=>/fist|gauntlet|power fist/.test(n)?"fist":/claw|talon|rend/.test(n)?"claws":/chain|saw|ripper|drill/.test(n)?"chain":/hammer|maul|mace|crozius|flail|club|pound|ram|bash/.test(n)?"hammer":/axe|scythe|sickle|cleaver/.test(n)?"axe":/spear|lance|halberd|glaive|staff|rod|sceptre|pike/.test(n)?"spear":"sword";
+  let main=rn.filter(n=>!/pistol/.test(n))[0]||rn[0]||"";let rangedK=main?cls(main):"";
+  const hv=rn.find(n=>cls(n)==="heavy");if(hv&&/terminator|centurion|devastator|heavy|havoc|hellblaster|eradicator|desolation/.test(String(L.name).toLowerCase()+all))rangedK=cls(hv);
+  const mbest=mn.find(n=>!/close combat weapon|fists?$|^unarmed/.test(n))||mn[0]||"";
+  return {ranged:rangedK,melee:mbest?mcls(mbest):"sword",hasMelee:!!mbest,shield:/shield|bulwark/.test(all),all,rn,mn,pistolOnly:rn.length&&rn.every(n=>/pistol/.test(n)),
+    twin:rn.some(n=>/twin|multi|las|assault cannon|gatling/.test(n)),sponsons:/sponson/.test(all),count:rg.length};
+}
+function pCount(L){let m=1;(L.comp||[]).forEach(s=>{const k=String(s).match(/(\d+)(?:\s*-\s*(\d+))?/);if(k)m+=0;});
+  let t=0;(L.comp||[]).forEach(s=>{const k=String(s).match(/(\d+)(?:\s*-\s*(\d+))?/);if(k)t+=+(k[2]||k[1]);});return Math.max(1,t);}
+/* ---- humanoid ---- */
+function pHuman(g,ox,oy,o,s){
+  s=s||1;const R=(x,y,w,h,c)=>g.rect(ox+Math.round(x*s),oy+Math.round(y*s),Math.max(1,Math.round(w*s)),Math.max(1,Math.round(h*s)),c);
+  const b=o.bulk,W=o.w;
+  if(o.cape)R(5,10,18,36,"C");
+  if(o.jump){R(2,8,8,22,"D");R(22,8,8,22,"D");R(3,30,6,5,"F");R(23,30,6,5,"F");R(4,35,4,3,"X");R(24,35,4,3,"X");}
+  if(o.banner){R(33,-16,2,60,"D");R(35,-14,14,20,"C");R(39,-9,6,8,"T");R(33,-18,2,3,"T");}
+  if(o.servo){R(0,4,3,22,"D");R(-6,2,8,3,"D");R(-8,-2,3,6,"G");R(-7,22,5,3,"D");}
+  R(b?8:10,26,b?7:5,14,"A");R(17,26,b?7:5,14,"A");R(8,40,9,4,"D");R(16,40,9,4,"D");R(b?8:10,32,b?7:5,2,"T");R(17,32,b?7:5,2,"T");
+  if(b)R(5,10,22,17,"A");else R(9,10,14,16,"A");
+  R(14,13,5,7,"T");R(9,25,15,2,"T");R(15,15,3,3,"D");
+  if(o.skull){R(12,b?3:1,9,b?8:9,"B");R(14,b?6:4,2,2,"K");R(18,b?6:4,2,2,"K");R(14,b?9:7,5,1,"K");}
+  else{R(12,b?3:1,9,b?8:9,"A");R(16,b?6:4,5,2,"G");}
+  if(o.plume){R(10,-3,13,3,"T");R(6,-1,6,5,"T");}
+  if(o.horns){R(9,-2,3,5,"B");R(21,-2,3,5,"B");}
+  if(o.halo){R(11,-6,11,1,"G");R(9,-5,2,1,"G");R(22,-5,2,1,"G");}
+  if(b){R(0,8,10,11,"A");R(0,17,10,2,"T");R(23,8,10,11,"A");R(23,17,10,2,"T");}
+  else{R(4,9,7,8,"A");R(4,15,7,2,"T");R(22,9,7,8,"A");R(22,15,7,2,"T");}
+  /* arms */
+  R(5,17,4,10,"A");R(24,17,4,8,"A");
+  const hx=26,hy=21,k=o.k;
+  const WP={
+    rifle:()=>{R(20,20,7,4,"D");R(26,19,16,3,"D");R(30,17,5,2,"D");R(41,20,6,1,"d");R(31,22,3,5,"D");},
+    pistol:()=>{R(26,21,8,3,"D");R(26,24,3,3,"D");R(34,22,2,1,"d");},
+    flamer:()=>{R(20,22,7,6,"D");R(26,19,10,4,"D");R(36,18,4,6,"T");R(40,19,4,3,"G");R(44,17,6,6,"F");R(50,18,5,4,"F");R(54,19,3,2,"X");R(46,19,3,2,"X");},
+    melta:()=>{R(20,20,7,4,"D");R(26,19,12,4,"D");R(38,18,5,6,"T");R(43,19,3,4,"G");R(46,20,5,2,"F");},
+    plasma:()=>{R(20,20,7,4,"D");R(26,19,13,4,"D");R(28,16,8,3,"P");R(39,19,3,4,"P");R(42,20,3,2,"G");},
+    heavy:()=>{R(10,4,34,6,"D");R(44,5,6,4,"d");R(50,6,2,2,"G");R(14,10,3,10,"D");R(26,10,3,10,"D");R(16,2,6,2,"d");},
+    sword:()=>{R(27,-14,4,30,"W");R(28,-14,1,30,"B");R(24,16,10,3,"T");R(27,19,4,6,"D");},
+    chain:()=>{R(27,-8,5,26,"d");for(let i=0;i<13;i++)R(32,-8+i*2,2,1,"W");R(24,18,10,3,"T");R(27,21,4,5,"D");},
+    hammer:()=>{R(28,-4,3,30,"D");R(22,-10,16,12,"A");R(22,-10,16,2,"T");R(22,0,16,2,"T");R(29,-8,2,8,"G");},
+    axe:()=>{R(28,-14,3,38,"D");R(31,-12,10,10,"W");R(33,-14,6,2,"W");R(24,-10,4,6,"W");},
+    spear:()=>{R(30,-24,2,64,"T");R(29,-30,4,8,"W");R(30,-34,2,4,"W");},
+    fist:()=>{R(25,18,12,11,"A");R(25,18,12,2,"T");R(36,19,3,9,"G");R(27,28,8,2,"T");},
+    claws:()=>{for(let i=0;i<3;i++)R(27,10+i*4,20,1,"W");R(23,9,6,11,"A");R(23,9,6,1,"T");}
+  };
+  (o.shield&&!(k==="heavy"))&&(()=>{R(-6,12,13,24,"A");R(-6,12,13,2,"T");R(-6,34,13,2,"T");R(-1,18,3,10,"T");})();
+  WP[k]&&WP[k]();
+  if(o.offFist)R(-4,18,10,10,"A"),R(-4,18,10,2,"T"),R(-4,27,10,1,"G");
+  if(o.staff){R(-6,-10,2,56,"D");R(-9,-14,8,6,"G");}
+}
+/* ---- vehicles ---- */
+function pVehicle(g,ox,oy,o,s){
+  s=s||1;const R=(x,y,w,h,c)=>g.rect(ox+Math.round(x*s),oy+Math.round(y*s),Math.max(1,Math.round(w*s)),Math.max(1,Math.round(h*s)),c);
+  const big=o.big,hov=o.hover;
+  if(hov){R(4,25,64,3,"D");R(10,28,52,2,"G");R(18,30,36,1,"G");R(0,19,6,6,"D");R(66,19,6,6,"D");R(0,17,4,2,"G");}
+  else{R(0,21,72,12,"D");R(2,22,68,2,"d");for(let i=0;i<8;i++){R(6+i*8,26,6,6,"e");R(8+i*8,28,2,2,"d");}}
+  R(4,big?6:10,64,big?16:12,"A");R(0,17,72,5,"A");R(66,14,8,8,"A");R(70,17,3,5,"A");R(6,big?10:14,60,2,"T");
+  if(o.sponsons){R(10,big?4:8,10,7,"D");R(52,big?4:8,10,7,"D");R(20,big?5:9,10,2,"d");R(62,big?5:9,10,2,"d");}
+  if(o.transport){R(14,4,38,8,"A");R(14,4,38,2,"T");R(24,0,8,5,"D");R(26,-2,12,2,"d");R(36,5,8,3,"G");R(50,2,10,2,"D");R(1,15,5,4,"G");}
+  else{R(20,big?-2:2,28,big?12:11,"A");R(20,big?-2:2,28,2,"T");R(30,big?-5:-1,8,4,"D");
+    const by=big?2:4;R(48,by,26,3,"D");R(74,by-1,3,5,"d");if(o.twin){R(48,by+4,26,3,"D");R(74,by+3,3,5,"d");}
+    R(23,big?3:6,5,2,"G");}
+  R(68,16,4,3,"G");
+}
+function pWalker(g,ox,oy,o,s){
+  s=s||1;const R=(x,y,w,h,c)=>g.rect(ox+Math.round(x*s),oy+Math.round(y*s),Math.max(1,Math.round(w*s)),Math.max(1,Math.round(h*s)),c);
+  R(12,26,8,16,"A");R(28,26,8,16,"A");R(9,40,13,4,"D");R(26,40,13,4,"D");R(12,32,8,2,"T");R(28,32,8,2,"T");
+  R(10,8,28,19,"A");R(10,8,28,2,"T");R(12,24,24,2,"T");
+  if(o.knight){R(14,-2,20,10,"A");R(18,2,12,3,"G");R(2,6,10,12,"A");R(36,6,10,12,"A");}
+  else{R(16,2,16,7,"A");R(20,4,8,2,"G");R(22,12,5,8,"D");}
+  /* left arm */
+  if(o.leftFist){R(-4,12,10,14,"A");R(-4,12,10,2,"T");R(-6,24,12,6,"D");R(-6,28,3,3,"W");R(-1,28,3,3,"W");R(4,28,3,3,"W");}
+  else{R(-2,10,10,8,"D");R(-12,12,12,4,"d");R(-12,18,12,4,"d");}
+  /* right arm gun */
+  if(o.hv){R(38,10,26,7,"D");R(38,18,26,5,"D");R(64,11,3,5,"G");R(64,19,3,3,"G");}
+  else{R(38,12,18,8,"D");R(56,13,4,5,"G");}
+  if(o.missiles){R(20,-6,12,5,"D");R(22,-8,2,2,"F");R(28,-8,2,2,"F");}
+}
+function pFlyer(g,ox,oy,o){const R=(x,y,w,h,c)=>g.rect(ox+x,oy+y,w,h,c);
+  R(4,12,52,7,"A");R(56,13,8,5,"A");R(64,14,5,3,"A");R(40,8,12,4,"G");R(4,12,52,2,"T");
+  for(let i=0;i<9;i++)R(30-i*3,19+i,22,1,"A");R(10,22,22,3,"T");
+  for(let i=0;i<8;i++)R(30-i*3,11-i,16,1,"A");
+  R(0,0,8,14,"A");R(-2,8,8,4,"A");R(0,2,8,2,"T");
+  R(-3,13,7,5,"D");R(-14,14,11,3,"F");R(-18,15,5,1,"X");
+  R(26,26,8,3,"D");R(36,24,4,3,"D");R(44,20,12,2,"D");R(56,20,3,2,"G");}
+function pBeast(g,ox,oy,o){const R=(x,y,w,h,c)=>g.rect(ox+x,oy+y,w,h,c);
+  R(6,10,28,12,"A");R(6,10,28,2,"T");R(34,6,12,10,"A");R(44,10,6,5,"A");R(46,15,4,2,"B");R(38,3,3,4,"A");R(42,3,3,4,"A");R(41,8,3,2,"G");
+  R(8,22,5,12,"A");R(15,22,5,12,"A");R(24,22,5,12,"A");R(31,22,5,12,"A");R(7,33,7,3,"D");R(30,33,7,3,"D");
+  R(0,8,8,3,"A");R(-4,4,5,5,"A");R(48,14,3,2,"B");R(12,12,18,2,"T");}
+function pBike(g,ox,oy,o){
+  pHuman(g,ox+8,oy-12,{k:o.k,bulk:false,plume:o.plume,cape:false,w:o.w},.8);
+  const R=(x,y,w,h,c)=>g.rect(ox+x,oy+y,w,h,c);
+  g.disc(ox+10,oy+32,8,"D");g.disc(ox+10,oy+32,4,"e");g.disc(ox+54,oy+32,8,"D");g.disc(ox+54,oy+32,4,"e");
+  R(8,22,48,9,"A");R(8,22,48,2,"T");R(46,17,12,8,"A");R(56,19,6,3,"G");R(2,24,8,4,"D");R(12,20,12,3,"D");}
+/* ---- composition ---- */
+function pCompose(L,kind,g,cx,gy,s){
+  const w=pWpn(L),n=String(L.name||"").toLowerCase(),k=(Array.isArray(L.keywords)?L.keywords.join(" "):String(L.keywords||"")).toLowerCase()+" "+((L.fkw||[]).join?(L.fkw||[]).join(" ").toLowerCase():"");
+  const has=r=>r.test(n)||r.test(k);
+  const meleeKind=["melee","hero","jump"].includes(kind);
+  let wk=meleeKind&&w.hasMelee&&!(w.ranged==="heavy")?w.melee:(w.ranged||w.melee||"rifle");
+  if(kind==="hero"&&w.ranged&&w.ranged!=="pistol"&&!has(/captain|lord|champion|marshal|chaplain|master/))wk=w.ranged;
+  if(w.pistolOnly&&!meleeKind)wk="pistol";
+  const o={k:wk,bulk:kind==="heavy",cape:kind==="hero",plume:kind==="hero"&&has(/captain|marshal|champion|lord|castellan|commander|chapter master|prince/),
+    banner:has(/ancient|standard|banner|icon bearer/),horns:has(/world eaters|khorne|chaos|heretic|traitor|death guard|thousand sons|cultist|berzerker/)&&!has(/chaos knights/),
+    jump:has(/jump pack|\bfly\b/)&&kind!=="heavy"&&kind!=="walker",skull:has(/chaplain|apothecary|death company/),halo:has(/librarian|psyker/),staff:has(/librarian|psyker/)&&!meleeKind?false:has(/librarian/),
+    servo:has(/techmarine|tech-?priest|enginseer/),shield:w.shield||has(/bladeguard|custodian guard|sentinel guard|storm shield/),offFist:kind==="heavy"&&w.mn.some(x=>/fist|claw/.test(x))&&wk!=="fist"&&wk!=="claws"&&wk!=="heavy",w};
+  if(wk==="heavy"){o.shield=false;}
+  if(["walker"].includes(kind)){
+    const knight=has(/knight|war dog|warsuit|titan|stompa|hierophant|riptide/)&&!has(/battlesuit?s?$/)||/knight|war ?dog/.test(n);
+    pWalker(g,cx-24*(knight?1.4:1)/1,gy-44*(knight?1.4:1),{knight,leftFist:w.mn.some(x=>/fist|claw|talon|close combat|sword|blade/.test(x))&&!/sentinel|dreadnought.*(assault cannon)/.test(w.all)||has(/dreadnought/),hv:w.rn.some(x=>/cannon|las|missile|launcher|multi/.test(x))||has(/knight/),missiles:w.rn.some(x=>/missile|launcher|rocket/.test(x))},knight?1.4:1);return;}
+  if(kind==="tank"||kind==="hover"){
+    const big=has(/land raider|baneblade|leman russ|crusader|redeemer|achilles|gladiator|castellan|executioner|spartan|vindicator|predator/),transport=has(/transport/)&&!has(/land raider/)||has(/rhino|razorback|impulsor|repulsor(?! exec)|chimera|termite|devilfish|wave ?serpent|venom|raider/)&&w.count<=2;
+    pVehicle(g,cx-36,gy-33,{big,hover:kind==="hover",transport:transport&&!has(/predator|vindicator|whirlwind|land raider/),sponsons:w.sponsons||has(/land raider|predator/),twin:w.twin},1);return;}
+  if(kind==="flyer"){pFlyer(g,cx-30,gy-30,o);return;}
+  if(kind==="beast"){pBeast(g,cx-24,gy-36,o);return;}
+  if(kind==="bike"){pBike(g,cx-32,gy-40,o);return;}
+  const cnt=(kind==="hero"||has(/\bcharacter\b|epic hero/))?1:Math.max(pCount(L),(L.comp&&L.comp.length)?1:(has(/squad|brethren|sodality|veterans|company|guard|terminators|intercessors|marines|boyz|warriors|cultists|hounds|blades/)?3:1));
+  const f=Math.min(3,cnt);
+  const hum=(x,y,sc)=>pHuman(g,x,y,o,sc);
+  if(f>=3){hum(cx-48,gy-50,1);hum(cx-4,gy-50,1);} else if(f===2){hum(cx-34,gy-50,1);}
+  hum(cx-18-(f>=3?-12:0),gy-(f>=2?44:44),1);
+}
+function pxScene(P,kind,L,seed){
+  const g=PG(120,80);pCompose(L,kind,g,68,73);const G=pFinish(g);
+  let s=seed*2654435761>>>0;const r=()=>((s=(s*1664525+1013904223)>>>0)/4294967296);
+  let bg=`<rect width="900" height="600" fill="#${gMix(P.bg,"000000",.35)}"/>`;
+  for(let i=0;i<10;i++){const y=i*60;bg+=`<rect y="${y}" width="900" height="60" fill="#${gMix(P.bg,P.trim,i/34)}" opacity="${(.5+i*.04).toFixed(2)}"/>`;}
+  for(let i=0;i<70;i++){const x=Math.floor(r()*150)*6,y=Math.floor(r()*88)*6,z=r()<.2?12:6;bg+=`<rect x="${x}" y="${y}" width="${z}" height="${z}" fill="#${r()<.6?P.glow:P.trim}" opacity="${(.1+r()*.45).toFixed(2)}"/>`;}
+  bg+=`<rect y="549" width="900" height="51" fill="#${gMix(P.bg,"000000",.6)}"/><rect y="540" width="900" height="9" fill="#${gMix(P.trim,"000000",.5)}"/>`;
+  for(let i=0;i<30;i++)bg+=`<rect x="${Math.floor(r()*150)*6}" y="${552+Math.floor(r()*8)*6}" width="${6+Math.floor(r()*3)*6}" height="6" fill="#${gMix(P.bg,"ffffff",.1)}"/>`;
+  bg+=`<rect width="900" height="600" fill="url(#vg)"/>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600" shape-rendering="crispEdges"><defs><linearGradient id="vg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".7"/><stop offset=".42" stop-color="#000" stop-opacity="0"/></linearGradient></defs>${bg}<g>${pSvg(G,P,7.5)}</g></svg>`;
+}
+function pxCut(P,kind,L){
+  const g=PG(120,80);pCompose(L,kind,g,68,73);const G=pFinish(g);
+  let x0=999,y0=999,x1=0,y1=0;for(let y=0;y<G.h;y++)for(let x=0;x<G.w;x++)if(G.a[y*G.w+x]){x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);}
+  const w=x1-x0+1,h=y1-y0+1,px=8;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w*px} ${h*px}" width="${w*px}" height="${h*px}" shape-rendering="crispEdges"><g transform="translate(${-x0*px} ${-y0*px})">${pSvg(G,P,px)}</g></svg>`;
+}
 
 /* ---------- AI LIBRARY (Claude drafts + shared store) ---------- */
 const slug=s=>nrm(s).replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,80)||"x";
