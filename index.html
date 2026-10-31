@@ -1860,10 +1860,20 @@ function needs(){
 }
 function artNeeds(){return [];}
 function artNeedsOld(){const seen=new Set();return UNITS.filter(u=>{const {star}=unitArt(u);if(!star||artFor(star.lib))return false;const k=artKey(star.lib)||u.title;if(seen.has(k))return false;seen.add(k);return true;});}
+function paintKeys(P){const fs=facSlugs(P)[0];if(!fs||!AIART.url||false)return null;const fac=facColors(P),ks=[];
+  Object.keys(LIB).forEach(k=>{const L=LIB[k];if(L&&L.wh&&L.whFac===fs)ks.push(k);});
+  return {fac,ks,lab:(P.factions||[]).slice(-1)[0]||fs};}
+function paintInfo(){if(!(typeof AIART!=="undefined"&&AIART.url))return null;try{const P=parseList((LISTS.lists.find(x=>x.id===LISTS.active)||{}).raw||"");const o=paintKeys(P);if(!o||!o.ks.length)return null;
+  const done=o.ks.filter(k=>AIART.ready[k+"|"+JSON.stringify(o.fac||{})]).length;return {total:o.ks.length,left:o.ks.length-done,lab:o.lab,busy:AIART.q.length+AIART.run};}catch(e){return null;}}
+function paintAll(btn){const P=parseList((LISTS.lists.find(x=>x.id===LISTS.active)||{}).raw||""),o=paintKeys(P);if(!o)return;btn.disabled=true;
+  GENCTX.fac=o.fac;try{o.ks.forEach(k=>{try{genArtFor(k);}catch(e){}});}finally{GENCTX.fac=null;}
+  const tick=setInterval(()=>{if(document.body.dataset.view!=="list"||(!AIART.q.length&&!AIART.run)){clearInterval(tick);}
+  try{renderStatus();}catch(e){}},3000);}
 function aiPanel(){
   const n=needs(),todo=n.units.length+n.dets.length+(n.fac?1:0),tn=textNeeds().length,qn=Object.keys(QUEUE).length,art=artNeeds();
   const desk=!!(SAMPLE&&MCP&&OWNER&&BROWSER_OK!==false);
-  if(!todo&&!tn&&!(desk&&qn)&&!art.length&&!AIBUSY&&!AILOG.length&&!SYNCSTATE)return "";
+  const pa=paintInfo();
+  if(!todo&&!tn&&!(desk&&qn)&&!art.length&&!AIBUSY&&!AILOG.length&&!SYNCSTATE&&!pa)return "";
   let h=`<div class="aip ${AIBUSY?"busy":""}">`;
   if(AIBUSY||AILOG.length)h+=`<h4>${AIBUSY?"Adding rules from Wahapedia…":"Library updated"}</h4>${AILOG.length?`<ul class="ailog">${AILOG.map(l=>`<li class="${l.s}">${esc(l.t)}</li>`).join("")}</ul>`:""}`;
   if(todo&&!AIBUSY){
@@ -1877,6 +1887,7 @@ function aiPanel(){
   const artLeft=art.length-artQ.length;
   if(!AIBUSY&&OWNER&&SYNC&&MCP&&(tn||qn||(SYNC.art&&artLeft)))h+=`<div class="row"><button class="btn" id="syncNow">Sync now</button>${desk&&(tn||qn)?`<button class="btn" id="aiText">Add wording here instead</button>`:""}</div>`;
   else if(!AIBUSY&&desk&&(tn||qn))h+=`<div class="row"><button class="btn pri" id="aiText">Add the wording</button></div>`;
+  if(pa)h+=`<h4 class="arth">Painted art</h4><p class="note">${pa.left?`${pa.left} of ${pa.total} ${esc(pa.lab)} units still to paint. They are saved on this phone once made.`:`All ${pa.total} ${esc(pa.lab)} units are painted and saved on this phone.`}</p>${pa.left&&!pa.busy?`<div class="row"><button class="btn pri" id="paintAll">Paint all ${esc(pa.lab)} art</button></div>`:pa.busy?`<p class="note">Painting… ${pa.busy} to go. Keep this open.</p>`:""}`;
   if(SYNCSTATE)h+=`<p class="note syncmsg">${esc(SYNCSTATE)}</p>`;
   return h+`</div>`;
 }
@@ -2248,6 +2259,7 @@ document.addEventListener("click",e=>{
   if(a.fav){const L=LISTS.lists.find(x=>x.id===a.fav);if(L){L.fav=L.fav?0:Date.now();saveLists();renderHome();}return;}
   if(t.id==="aiDraft"){draftMissing();return;}
   if(t.id==="aiText"){fillText();return;}
+  if(t.id==="paintAll"){paintAll(t);return;}
   if(t.id==="syncNow"){syncNow(t);return;}
   if(a.artgo){const d=army.querySelector(`details[data-u="${a.artgo}"]`);if(d){const sec=d.closest(".cg.shut");if(sec){const hb=sec.querySelector(".cg-h");toggleCG(hb);}d.open=true;const p=d.querySelector(".artp");if(p)p.open=true;setTimeout(()=>(p||d).scrollIntoView({behavior:"smooth",block:"center"}),350);}return;}
   if(a.artmake){makeArt(t,a.artmake,a.name);return;}
