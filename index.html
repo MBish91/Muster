@@ -1911,13 +1911,20 @@ function login(){if(document.getElementById("sbov"))return;const o=document.crea
   o.innerHTML=`<form id="sbf" style="width:100%;max-width:320px;display:flex;flex-direction:column;gap:10px"><h1 style="margin:0 0 4px;font-size:28px;letter-spacing:.08em">MUSTER</h1><p style="margin:0 0 8px;color:#b9a98f;font-size:14px">Sign in to keep your armies on every device.</p>
   <input id="sbe" type="email" autocomplete="username" placeholder="Email" required style="padding:12px;border-radius:8px;border:1px solid #6d5035;background:#1c1213;color:inherit;font-size:16px">
   <input id="sbp" type="password" autocomplete="current-password" placeholder="Password" required style="padding:12px;border-radius:8px;border:1px solid #6d5035;background:#1c1213;color:inherit;font-size:16px">
-  <button type="submit" style="padding:12px;border-radius:8px;border:0;background:#c9a24a;color:#120b0c;font-weight:700;font-size:16px">Sign in</button>
+  <button type="submit" id="sbgo" style="padding:12px;border-radius:8px;border:0;background:#c9a24a;color:#120b0c;font-weight:700;font-size:16px">Sign in</button>
+  <button type="button" id="sbmode" style="background:none;border:0;color:#c9a24a;font-size:14px">New here? Create an account</button>
   <div id="sbm" style="min-height:18px;color:#e58a8a;font-size:13px"></div>
   <button type="button" id="sbs" style="background:none;border:0;color:#b9a98f;font-size:13px;text-decoration:underline">Use without an account (this device only)</button></form>`;
   document.body.appendChild(o);
   document.getElementById("sbs").onclick=()=>{try{localStorage.setItem("muster-sb-skip","1");}catch(e){}o.remove();bar();};
-  document.getElementById("sbf").onsubmit=async ev=>{ev.preventDefault();const m=document.getElementById("sbm");m.textContent="Signing in…";
-    try{keep(await auth("token?grant_type=password",{email:document.getElementById("sbe").value.trim(),password:document.getElementById("sbp").value}));o.remove();bar();await pull();}catch(e){m.textContent=e.message;}};}
+  let signup=false;const mb=document.getElementById("sbmode"),go=document.getElementById("sbgo"),pw=document.getElementById("sbp");
+  mb.onclick=()=>{signup=!signup;go.textContent=signup?"Create account":"Sign in";mb.textContent=signup?"Already have an account? Sign in":"New here? Create an account";pw.autocomplete=signup?"new-password":"current-password";pw.placeholder=signup?"Choose a password (8+ characters)":"Password";document.getElementById("sbm").textContent="";};
+  document.getElementById("sbf").onsubmit=async ev=>{ev.preventDefault();const m=document.getElementById("sbm"),em=document.getElementById("sbe").value.trim(),pa=pw.value;m.style.color="#e58a8a";m.textContent=signup?"Creating account…":"Signing in…";
+    try{let j;
+      if(signup){if(pa.length<8)throw new Error("Use a password of at least 8 characters.");j=await auth("signup",{email:em,password:pa});
+        if(!j.access_token){m.style.color="#b9d99a";m.textContent="Account created. Check your email to confirm it, then sign in.";mb.click();m.style.color="#b9d99a";m.textContent="Account created. Check your email to confirm it, then sign in.";return;}}
+      else j=await auth("token?grant_type=password",{email:em,password:pa});
+      keep(j);o.remove();bar();await pull();}catch(e){m.textContent=e.message;}};}
 function start(){bar();if(!SES&&!SKIP)login();else pull();
   document.addEventListener("visibilitychange",()=>{if(!document.hidden&&SES)pull();});}
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();

@@ -1,1 +1,1 @@
-window.MUSTER_SB={url:"https://mhalwnmhknrrvaxlverd.supabase.co",key:"sb_publishable_VTU5ykgkKP12El3Rc0qA-w_VoWJwmEi"};
+window.MUSTER_SB={url:"http://localhost:8767",key:"anon"};
