@@ -1098,7 +1098,7 @@ function loadList(id){
 function unitArt(u){
   const star=u.parts.find(p=>p.warlord)||u.parts.find(p=>/Leader/.test(p.role))||u.parts[0];
   const withArt=[star,...u.parts].find(p=>artFor(p.lib));
-  return {star,art:withArt?artFor(withArt.lib):null};
+  return {star,art:withArt?artFor(withArt.lib):(star&&star.lib&&LIB[star.lib]?genArtFor(star.lib):null)};
 }
 function heroArt(u){
   const q=p=>p.qty||DS[p.key].qty||1;
@@ -1155,7 +1155,7 @@ const WORDMARK=`<svg class="wordmark" viewBox="0 0 300 70" role="img" aria-label
 
 const armyLabel=P=>P.factions.length?P.factions[P.factions.length-1].replace(/’/g,"'"):"Other";
 function listCover(P){
-  const pick=u=>{const ks=NAMEMAP[nrm(u.name)];if(ks)for(const k of ks)if(artFor(k))return artFor(k);const mm=MODELMAP[nrm(u.name)];if(mm)for(const m of u.models){const k=mm[nrm(m.name)];if(k&&artFor(k))return artFor(k);}return null;};
+  const pick=u=>{const ks=NAMEMAP[nrm(u.name)];if(ks)for(const k of ks)if(artFor(k))return artFor(k);const mm=MODELMAP[nrm(u.name)];if(mm)for(const m of u.models){const k=mm[nrm(m.name)];if(k&&artFor(k))return artFor(k);}if(ks)for(const k of ks)if(LIB[k])return genArtFor(k);return null;};
   const w=P.units.find(u=>u.warlord);return (w&&pick(w))||P.units.map(pick).find(Boolean)||null;}
 function listCheck(){
   const R=REPORT,ok=!R.missing.length&&!R.issues.length&&!R.detMissing.length&&!R.enhMissing.length;
@@ -1321,6 +1321,112 @@ function renderPhases(animate){
   if(animate){el.classList.remove("stagger");void el.offsetWidth;el.classList.add("stagger");}else el.classList.remove("stagger");
 }
 function renderAll(){renderArmy();renderPhases();renderStrats();renderBattle();renderRules();}
+
+/* ---------- instant generated art: original vector figures drawn in code, tinted by the army's colours ---------- */
+const GEN={cache:{}};
+function gHex(h,fb){h=String(h||"").replace("#","");if(h.length===3)h=h.split("").map(c=>c+c).join("");return /^[0-9a-f]{6}$/i.test(h)?h:fb;}
+function gMix(a,b,t){const x=parseInt(a,16),y=parseInt(b,16);const f=(s)=>Math.round(((x>>s)&255)*(1-t)+((y>>s)&255)*t);return [f(16),f(8),f(0)].map(v=>v.toString(16).padStart(2,"0")).join("");}
+function gLum(h){const n=parseInt(h,16);return (0.2126*(n>>16&255)+0.7152*(n>>8&255)+0.0722*(n&255))/255;}
+function gPal(fac){
+  const c=fac||{};let head=gHex(c.header,"2a2a30"),stripe=gHex(c.stripe,"8a6a3a"),acc=gHex(c.accent,"e9dccb");
+  let arm=head;if(gLum(arm)<.2)arm=gMix(arm,"8a8a96",.32);if(gLum(arm)>.6)arm=gMix(arm,"000000",.25);
+  return {bg:gMix(head,"000000",.55),arm,armD:gMix(arm,"000000",.55),armL:gMix(arm,"ffffff",.28),trim:gLum(stripe)<.25?gMix(stripe,"e0ac45",.6):stripe,glow:gMix(stripe,"ffb347",.55),acc};
+}
+/* choose the figure that fits the unit */
+function gKind(L){
+  const n=(L&&L.name||"").toLowerCase(),k=((L&&L.keywords)||[]).map(x=>String(x).toLowerCase()).join(" ")+" "+((L&&L.fkw)||[]).map(x=>String(x).toLowerCase()).join(" ");
+  const has=r=>r.test(n)||r.test(k);
+  if(has(/aircraft|\bfly\b/)&&has(/vehicle|aircraft/)&&!has(/dreadnought|walker/)&&has(/gunship|jetfighter|interceptor|dropship|thunderhawk|stormhawk|stormtalon|stormraven|talon|aircraft|astraeus|falchion|blackstar|nephilim|flyer/))return "flyer";
+  if(has(/dreadnought|walker|redemptor|contemptor|ballistus|brutalis|invictor|helbrute|defiler|maulerfiend|forgefiend|castigator|knight|war dog|warsuit|titan|stompa|riptide|crisis|ghostkeel|battlesuit|sentinel|wraith|carnifex|hierophant/)&&!has(/guard sodality/))return "walker";
+  if(has(/land speeder|storm speeder|repulsor|gladiator|grav|caladius|coronus|pallas|hover|skimmer|hammerhead|devilfish|waveserpent|falcon|venom|raider(?!.*land)|ravager|void/))return "hover";
+  if(has(/vehicle|transport|tank|rhino|razorback|predator|vindicator|whirlwind|land raider|sicaran|kratos|typhon|cerberus|termite|drop pod|bunker|battery|carrier|impulsor|baneblade|leman|chimera|hellhound|basilisk/))return "tank";
+  if(has(/\bbike|jetbike|outrider|attack bike|atv|cavalry|ravenwing|knight|mounted/)&&!has(/guard|terminator/))return "bike";
+  if(has(/wolves|wolf pack|wulfen|thunderwolf|hounds|beasts|\bbeast\b|monster|carnifex|nurglings|swarm/))return has(/thunderwolf/)?"bike":"beast";
+  if(has(/jump pack|jump packs|\bjump\b|assault intercessors with|inceptor|vanguard veteran squad with|chaplain with|captain with|reiver.*grav/))return "jump";
+  if(has(/terminator|gravis|centurion|aggressor|deathwing|allarus|wardens|custodian guard|sentinel guard|sanguinary guard|inner circle|armour of|heavy intercessor|crusade ancient|dreadnought/))return "heavy";
+  if(has(/character/)||has(/captain|lord|chaplain|librarian|marshal|champion|master|commander|lieutenant|ancient|judiciar|apothecary|priest|techmarine|castellan|watch|battle leader|prince|shield-captain|blade champion|trajann|valoris|chief/))return "hero";
+  if(has(/assault|berzerker|blood claw|death company|bladeguard|vanguard|reiver|sword brethren|crusader|bloodletter|khorne|infiltrator|incursor|scout|sternguard melee|eightbound|exalted|slaughter|jakhal|boy|nob|warrior|guardian|swordsman|vigilator|prosecutor/))return "melee";
+  return "rifle";
+}
+function gHumanoid(P,o){
+  const s=o.scale||1,cx=150,tx=`translate(${cx} 0) scale(${s}) translate(${-cx} 0)`;
+  const heavy=o.heavy?1.22:1,ps=o.heavy?36:30,hw=o.heavy?30:24;
+  let g=`<g transform="${tx}">`;
+  if(o.cape)g+=`<path d="M108 150 Q70 260 96 400 L205 400 Q226 260 192 150 Z" fill="${'#'+gMix(P.acc,'000000',.4)}" opacity=".0"/><path d="M104 148 Q58 270 82 398 L196 398 Q214 262 196 148 Z" fill="#${gMix(P.trim,'000000',.55)}" stroke="#${P.trim}" stroke-opacity=".55" stroke-width="1.5"/>`;
+  if(o.jet)g+=`<g><rect x="92" y="150" width="30" height="86" rx="9" fill="#${P.armD}"/><rect x="178" y="150" width="30" height="86" rx="9" fill="#${P.armD}"/><path d="M96 236 L108 330 L120 236 Z" fill="#${P.glow}" opacity=".9"/><path d="M180 236 L192 330 L204 236 Z" fill="#${P.glow}" opacity=".9"/></g>`;
+  /* legs */
+  g+=`<path d="M${150-26*heavy} 250 L${150-34*heavy} 392 L${150-4} 392 L${150-2} 262 Z" fill="url(#ag)"/><path d="M${150+26*heavy} 250 L${150+36*heavy} 392 L${150+4} 392 L${150+2} 262 Z" fill="url(#ag)"/>`;
+  g+=`<rect x="${150-38*heavy}" y="382" width="${40*heavy}" height="22" rx="7" fill="#${P.armD}"/><rect x="${150+0}" y="382" width="${44*heavy}" height="22" rx="7" fill="#${P.armD}"/>`;
+  g+=`<path d="M${150-20*heavy} 300 h${40*heavy} v14 h-${40*heavy}z" fill="#${P.trim}" opacity=".5"/>`;
+  /* torso */
+  g+=`<path d="M${150-48*heavy} 148 L${150+48*heavy} 148 L${150+30*heavy} 262 L${150-30*heavy} 262 Z" fill="url(#ag)" stroke="#${P.armD}" stroke-width="2"/>`;
+  g+=`<path d="M${150-22} 172 h44 l-8 52 h-28z" fill="#${P.armD}" opacity=".55"/><circle cx="150" cy="198" r="9" fill="#${P.trim}"/>`;
+  g+=`<rect x="${150-32*heavy}" y="252" width="${64*heavy}" height="16" rx="5" fill="#${P.trim}" opacity=".85"/>`;
+  /* head */
+  g+=`<path d="M${150-hw*.8} 126 Q150 74 ${150+hw*.8} 126 L${150+hw*.65} 142 L${150-hw*.65} 142 Z" fill="url(#ag)" stroke="#${P.armD}" stroke-width="2"/><rect x="${150-14}" y="112" width="28" height="9" rx="3" fill="#${P.glow}"/>`;
+  if(o.plume)g+=`<path d="M150 78 Q184 66 206 100 Q172 88 150 96 Z" fill="#${P.trim}"/>`; else if(o.horns)g+=`<path d="M128 88 Q112 64 120 52 Q132 70 138 84Z M172 88 Q188 64 180 52 Q168 70 162 84Z" fill="#${P.acc}"/>`;
+  /* pauldrons */
+  g+=`<circle cx="${150-52*heavy}" cy="152" r="${ps}" fill="url(#ag)" stroke="#${P.trim}" stroke-width="3"/><circle cx="${150+52*heavy}" cy="152" r="${ps}" fill="url(#ag)" stroke="#${P.trim}" stroke-width="3"/>`;
+  /* weapon + arms */
+  const W=o.weapon;
+  if(W==="rifle")g+=`<path d="M${150+50*heavy} 180 L${150+30} 226 L${150-40} 222 L${150-48*heavy} 184" fill="none" stroke="#${P.armD}" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/><path d="M80 232 L250 214 L252 228 L84 246Z" fill="#26262c" stroke="#${P.trim}" stroke-width="2"/><rect x="236" y="212" width="40" height="8" rx="3" fill="#18181c"/><circle cx="278" cy="216" r="4" fill="#${P.glow}"/>`;
+  else if(W==="sword")g+=`<path d="M${150+52*heavy} 176 L${150+84} 120" fill="none" stroke="#${P.armD}" stroke-width="18" stroke-linecap="round"/><path d="M${150+84} 120 L${150+110} 20 L${150+122} 26 L${150+98} 128 Z" fill="#e6edf5" stroke="#${P.glow}" stroke-width="2.5"/><rect x="${150+68}" y="112" width="40" height="9" rx="3" transform="rotate(-18 ${150+88} 116)" fill="#${P.trim}"/><path d="M${150-52*heavy} 178 L${150-70} 236" fill="none" stroke="#${P.armD}" stroke-width="18" stroke-linecap="round"/><rect x="${150-92}" y="226" width="38" height="14" rx="4" fill="#26262c" transform="rotate(-8 ${150-72} 232)"/>`;
+  else if(W==="hammer")g+=`<path d="M${150+52*heavy} 176 L${150+92} 150" fill="none" stroke="#${P.armD}" stroke-width="19" stroke-linecap="round"/><rect x="${150+86}" y="40" width="12" height="150" rx="5" fill="#3a3a42"/><rect x="${150+62}" y="34" width="62" height="46" rx="9" fill="url(#ag)" stroke="#${P.trim}" stroke-width="3"/><path d="M${150-52*heavy} 170 L${150-88} 220" fill="none" stroke="#${P.armD}" stroke-width="19" stroke-linecap="round"/><path d="M${150-130} 170 q-30 50 0 120 q50 -10 70 -50 q-8 -52 -70 -70z" transform="translate(30 0)" fill="url(#ag)" stroke="#${P.trim}" stroke-width="4"/><circle cx="${150-92}" cy="228" r="9" fill="#${P.glow}"/>`;
+  else if(W==="spear")g+=`<path d="M${150+52*heavy} 176 L${150+70} 230" fill="none" stroke="#${P.armD}" stroke-width="19" stroke-linecap="round"/><rect x="${150+66}" y="-4" width="9" height="420" rx="4" fill="#${P.trim}"/><path d="M${150+60} 8 L${150+70} -34 L${150+82} 8Z" fill="#fff4c8" stroke="#${P.glow}" stroke-width="2"/><path d="M${150-52*heavy} 176 L${150-60} 236" fill="none" stroke="#${P.armD}" stroke-width="19" stroke-linecap="round"/><path d="M${150-124} 168 h60 q6 80 -30 110 q-36 -30 -30 -110z" fill="url(#ag)" stroke="#${P.trim}" stroke-width="4"/>`;
+  else if(W==="cannon")g+=`<path d="M${150+52*heavy} 178 L${150+36} 232" fill="none" stroke="#${P.armD}" stroke-width="19" stroke-linecap="round"/><path d="M${150-52*heavy} 178 L${150-10} 226" fill="none" stroke="#${P.armD}" stroke-width="19" stroke-linecap="round"/><path d="M70 226 L214 206 L218 242 L74 262Z" fill="#2a2a32" stroke="#${P.trim}" stroke-width="2.5"/><rect x="212" y="214" width="62" height="12" rx="4" fill="#3a3a44"/><rect x="212" y="232" width="62" height="12" rx="4" fill="#3a3a44"/><circle cx="278" cy="220" r="5" fill="#${P.glow}"/><circle cx="278" cy="238" r="5" fill="#${P.glow}"/>`;
+  g+=`</g>`;return g;
+}
+function gTank(P,hover){
+  let g="";
+  if(hover){g+=`<ellipse cx="150" cy="352" rx="120" ry="14" fill="#${P.glow}" opacity=".35"/><ellipse cx="86" cy="334" rx="30" ry="9" fill="#${P.glow}"/><ellipse cx="214" cy="334" rx="30" ry="9" fill="#${P.glow}"/>`;
+    g+=`<path d="M18 306 L58 250 L242 244 L290 296 L262 326 L40 330 Z" fill="url(#ag)" stroke="#${P.trim}" stroke-width="3"/><path d="M110 250 L132 196 L206 196 L228 246Z" fill="url(#ag)" stroke="#${P.trim}" stroke-width="3"/><rect x="206" y="206" width="84" height="14" rx="5" fill="#2a2a32"/><rect x="206" y="226" width="84" height="12" rx="5" fill="#2a2a32"/><circle cx="292" cy="213" r="5" fill="#${P.glow}"/>`;}
+  else{g+=`<rect x="14" y="304" width="272" height="64" rx="30" fill="#17171b" stroke="#${P.armD}" stroke-width="3"/>`;for(let i=0;i<7;i++)g+=`<circle cx="${44+i*34}" cy="338" r="14" fill="#2c2c34" stroke="#${P.trim}" stroke-opacity=".5" stroke-width="2"/>`;
+    g+=`<path d="M22 306 L48 236 L246 236 L282 300 Z" fill="url(#ag)" stroke="#${P.trim}" stroke-width="3"/><path d="M96 236 L116 188 L196 188 L216 236Z" fill="url(#ag)" stroke="#${P.trim}" stroke-width="3"/><rect x="190" y="204" width="98" height="14" rx="5" fill="#2a2a32"/><rect x="278" y="200" width="16" height="22" rx="4" fill="#3a3a44"/><circle cx="296" cy="211" r="5" fill="#${P.glow}"/><path d="M22 306 L-4 318 L22 338Z" fill="#${P.armD}"/>`;}
+  g+=`<rect x="118" y="212" width="54" height="9" rx="3" fill="#${P.trim}" opacity=".7"/><circle cx="144" cy="250" r="11" fill="#${P.trim}" opacity=".9"/>`;return g;
+}
+function gWalker(P){
+  let g=`<path d="M104 270 L78 392 L126 392 L132 292Z" fill="url(#ag)" stroke="#${P.armD}" stroke-width="2"/><path d="M196 270 L222 392 L174 392 L168 292Z" fill="url(#ag)" stroke="#${P.armD}" stroke-width="2"/><rect x="62" y="384" width="74" height="20" rx="8" fill="#${P.armD}"/><rect x="164" y="384" width="74" height="20" rx="8" fill="#${P.armD}"/>`;
+  g+=`<path d="M88 124 L212 124 L226 270 L74 270 Z" fill="url(#ag)" stroke="#${P.trim}" stroke-width="3"/><path d="M114 80 Q150 54 186 80 L194 124 L106 124Z" fill="url(#ag)" stroke="#${P.trim}" stroke-width="3"/><rect x="124" y="92" width="52" height="12" rx="4" fill="#${P.glow}"/>`;
+  g+=`<path d="M88 150 L40 206 L44 262" fill="none" stroke="#${P.armD}" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/><circle cx="44" cy="276" r="26" fill="url(#ag)" stroke="#${P.trim}" stroke-width="3"/>`;
+  g+=`<path d="M212 152 L252 188 L246 214" fill="none" stroke="#${P.armD}" stroke-width="26" stroke-linecap="round"/><path d="M200 196 L300 168 L304 208 L204 238Z" fill="#2a2a32" stroke="#${P.trim}" stroke-width="3"/><rect x="296" y="174" width="32" height="10" rx="3" fill="#3a3a44"/><rect x="296" y="190" width="32" height="10" rx="3" fill="#3a3a44"/><circle cx="330" cy="179" r="5" fill="#${P.glow}"/>`;
+  g+=`<rect x="110" y="196" width="80" height="14" rx="5" fill="#${P.trim}" opacity=".8"/>`;return g;
+}
+function gFlyer(P){
+  return `<path d="M20 232 L150 208 L286 226 L150 262 Z" fill="url(#ag)" stroke="#${P.trim}" stroke-width="3"/><path d="M138 214 L90 120 L120 116 L168 212Z" fill="url(#ag)" stroke="#${P.trim}" stroke-width="3"/><path d="M138 258 L74 346 L108 350 L170 262Z" fill="url(#ag)" stroke="#${P.trim}" stroke-width="3"/><path d="M276 224 L318 232 L276 240Z" fill="#${P.armD}"/><ellipse cx="226" cy="226" rx="30" ry="9" fill="#${P.glow}" opacity=".85"/><path d="M26 236 L-26 232 L26 244Z" fill="#${P.glow}"/><path d="M40 238 L-60 236 L40 248Z" fill="#${P.glow}" opacity=".5"/>`;
+}
+function gBeast(P){
+  return `<path d="M30 300 Q40 230 100 220 Q150 214 188 228 L240 196 L286 208 L270 238 L240 244 Q232 292 222 340 L206 340 L206 300 L110 300 L106 346 L88 346 L84 304 L56 330 Z" fill="url(#ag)" stroke="#${P.trim}" stroke-width="3"/><path d="M244 200 L252 168 L268 196Z" fill="url(#ag)"/><circle cx="268" cy="214" r="5" fill="#${P.glow}"/><path d="M268 228 l14 -2 l-4 10z" fill="#fff"/><path d="M40 296 Q6 250 14 210" fill="none" stroke="#${P.armD}" stroke-width="12" stroke-linecap="round"/>`;
+}
+function gBike(P){
+  let g=`<circle cx="70" cy="340" r="52" fill="#16161a" stroke="#${P.trim}" stroke-width="4"/><circle cx="70" cy="340" r="26" fill="#2a2a32"/><circle cx="232" cy="340" r="52" fill="#16161a" stroke="#${P.trim}" stroke-width="4"/><circle cx="232" cy="340" r="26" fill="#2a2a32"/>`;
+  g+=`<path d="M40 304 L98 262 L206 258 L262 300 L226 326 L92 328Z" fill="url(#ag)" stroke="#${P.trim}" stroke-width="3"/><path d="M200 262 L246 224 L266 232" fill="none" stroke="#${P.armD}" stroke-width="12" stroke-linecap="round"/><circle cx="284" cy="294" r="8" fill="#${P.glow}"/>`;
+  g+=`<g transform="translate(60 18) scale(.72)">${gHumanoid(P,{weapon:"sword",plume:0}).replace('translate(150 0) scale(1) translate(-150 0)','translate(0 0)')}</g>`;return g;
+}
+function gArt(P,kind,seed){
+  const defs=`<defs><linearGradient id="ag" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#${P.armL}"/><stop offset=".45" stop-color="#${P.arm}"/><stop offset="1" stop-color="#${P.armD}"/></linearGradient></defs>`;
+  const v=seed%3;let body;
+  if(kind==="flyer")body=gFlyer(P);else if(kind==="walker")body=gWalker(P);else if(kind==="tank")body=gTank(P,false);else if(kind==="hover")body=gTank(P,true);else if(kind==="beast")body=gBeast(P);else if(kind==="bike")body=gBike(P);
+  else{const o={rifle:{weapon:v?"cannon":"rifle"},melee:{weapon:"sword",horns:v===2},heavy:{weapon:v===1?"spear":"hammer",heavy:1},hero:{weapon:"sword",cape:1,plume:v!==1,scale:1.04},jump:{weapon:"sword",jet:1}}[kind]||{weapon:"rifle"};body=gHumanoid(P,o);}
+  return {defs,body};
+}
+function gSvgCut(P,kind,seed){const a=gArt(P,kind,seed);return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-70 -50 460 480" width="460" height="480">${a.defs}${a.body}</svg>`;}
+function gSvgScene(P,kind,seed){
+  const a=gArt(P,kind,seed);let s=seed*2654435761>>>0;const r=()=>((s=(s*1664525+1013904223)>>>0)/4294967296);
+  let bits="";for(let i=0;i<46;i++)bits+=`<circle cx="${(270+r()*620).toFixed(0)}" cy="${(r()*600).toFixed(0)}" r="${(1+r()*r()*6).toFixed(1)}" fill="#${r()<.7?P.trim:P.acc}" opacity="${(.25+r()*.5).toFixed(2)}"/>`;
+  let haze="";for(let i=0;i<9;i++){const R=90+r()*200;haze+=`<circle cx="${(300+r()*600).toFixed(0)}" cy="${(r()*600).toFixed(0)}" r="${R.toFixed(0)}" fill="#${P.trim}" opacity="${(.05+r()*.09).toFixed(2)}"/>`;}
+  const wide=["tank","hover","flyer","beast","bike"].includes(kind),sc=wide?1.6:1.15,x=wide?300:(kind==="walker"?400:470),y=wide?-130:(kind==="walker"?45:70);
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600"><defs><linearGradient id="bgg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#050505"/><stop offset=".55" stop-color="#${gMix(P.bg,'000000',.1)}"/><stop offset="1" stop-color="#0b0606"/></linearGradient><radialGradient id="gl" cx=".62" cy=".62" r=".55"><stop offset="0" stop-color="#${P.glow}" stop-opacity=".38"/><stop offset="1" stop-color="#${P.glow}" stop-opacity="0"/></radialGradient><linearGradient id="vg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".75"/><stop offset=".42" stop-color="#000" stop-opacity="0"/></linearGradient></defs><rect width="900" height="600" fill="url(#bgg)"/>${haze}<rect width="900" height="600" fill="url(#gl)"/>${bits}<g transform="translate(${x} ${y}) scale(${sc})" style="filter:drop-shadow(0 0 22px #${P.glow})">${a.defs.replace('id="ag"','id="ag"')}${a.body}</g><rect width="900" height="600" fill="url(#vg)"/></svg>`;
+}
+function genArtFor(lib){
+  const L=LIB[lib];if(!L)return null;
+  let fac=((WH.bySlug[L.whFac]||{}).colors)||null;
+  if(!fac){try{fac=(FACDB[nrm((META.factions||[]).slice(-1)[0]||"")]||{}).colors||null;}catch(e){}}
+  const key=lib+"|"+JSON.stringify(fac||{});if(GEN.cache[key])return GEN.cache[key];
+  const P=gPal(fac),kind=gKind(L);let seed=0;for(const ch of lib)seed=(seed*31+ch.charCodeAt(0))>>>0;
+  const uri=svg=>"data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);
+  const wide=["tank","hover","flyer","walker","beast","bike"].includes(kind);
+  return GEN.cache[key]={s:uri(gSvgScene(P,kind,seed)),c:uri(gSvgCut(P,kind,seed)),w:wide||kind==="walker",gen:true,kind};
+}
 
 /* ---------- AI LIBRARY (Claude drafts + shared store) ---------- */
 const slug=s=>nrm(s).replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,80)||"x";
