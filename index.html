@@ -408,7 +408,7 @@ button.cg-h{width:100%;background:none;border:0;text-align:left;-webkit-appearan
 .ldel{position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.5);color:#fff;font-size:13px;cursor:pointer}
 /* home hero */
 .homehero{position:relative;margin:calc(-1*var(--s4)) calc(-1*var(--s3)) 6px;height:236px;overflow:hidden;background:#0b0907}
-.homehero .hbg{position:absolute;inset:0;background:linear-gradient(0deg,rgba(11,9,7,1) 6%,rgba(11,9,7,.6) 42%,rgba(11,9,7,.2) 72%,rgba(11,9,7,.5)),url(art/home/battle.jpg) center 35%/cover no-repeat;animation:hbg 16s ease-in-out infinite alternate}
+.homehero .hbg{position:absolute;inset:0;background:linear-gradient(0deg,rgba(11,9,7,1) 6%,rgba(11,9,7,.6) 42%,rgba(11,9,7,.2) 72%,rgba(11,9,7,.5)),radial-gradient(circle at 25% 80%,rgba(255,110,40,.28),transparent 45%),radial-gradient(circle at 80% 70%,rgba(255,170,60,.2),transparent 42%),radial-gradient(circle at 50% 20%,rgba(120,30,30,.35),transparent 55%),#0b0907;animation:hbg 16s ease-in-out infinite alternate}
 @keyframes hbg{from{transform:scale(1.04)}to{transform:scale(1.12) translateX(-2%)}}
 .arena{position:absolute;left:0;right:0;top:6px;height:128px;display:flex;justify-content:center;align-items:flex-end;gap:2px;pointer-events:none}
 .arena .fl,.arena .fr{width:42%;max-width:190px;height:100%;display:flex;align-items:flex-end}
@@ -1193,8 +1193,7 @@ const FACE={pool:[],i:0,t:null};
 function leaderPool(groups){
   const seen=new Set(),out=[];const add=(src,army)=>{if(src&&!seen.has(src)){seen.add(src);out.push({src,army});}};
   Object.keys(groups||{}).forEach(g=>groups[g].forEach(({P})=>{const a=listCover(P);if(a&&a.c&&!a.w)add(a.c,g);}));
-  add("cut/bt/captain.webp","Black Templars");add("cut/tau/farsight.webp","T'au Empire");add("cut/bt/helbrecht.webp","Black Templars");
-  ROSTER.forEach(([k,n])=>{if(LEADOK[k])add(`lead/${k}.webp`,n);});
+  GEN_BRAND.forEach((_,i)=>add(brandFig(i),"Muster"+i));
   return out;
 }
 function nextPair(){const P=FACE.pool;if(P.length<2)return null;
@@ -1427,6 +1426,12 @@ function genArtFor(lib){
   const wide=["tank","hover","flyer","walker","beast","bike"].includes(kind);
   return GEN.cache[key]={s:uri(gSvgScene(P,kind,seed)),c:uri(gSvgCut(P,kind,seed)),w:wide||kind==="walker",gen:true,kind};
 }
+
+/* branding figures: fixed generated set */
+const GEN_BRAND=[["hero","1d3a8a","e0ac45"],["heavy","7a1616","c9a64a"],["jump","1f5a3a","d9d2b0"],["melee","5a2a6e","e0ac45"],["rifle","8a6a1a","fff3c4"],["hero","3a3a44","a51c1c"]];
+function brandFig(i,flip){const [k,h,s]=GEN_BRAND[i%GEN_BRAND.length];const P=gPal({header:"#"+h,stripe:"#"+s});
+  return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(gSvgCut(P,k,i+3));}
+const BRAND_BG="radial-gradient(circle at 25% 80%,rgba(255,110,40,.28),transparent 45%),radial-gradient(circle at 80% 70%,rgba(255,170,60,.2),transparent 42%),radial-gradient(circle at 50% 20%,rgba(120,30,30,.35),transparent 55%),#0b0907";
 
 /* ---------- AI LIBRARY (Claude drafts + shared store) ---------- */
 const slug=s=>nrm(s).replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,80)||"x";
@@ -2014,7 +2019,7 @@ function bar(){let b=document.getElementById("sbbar");if(!b){b=document.createEl
   if(o)o.onclick=()=>{SES=null;try{localStorage.removeItem("muster-sb");}catch(e){}login();bar();};
   if(i)i.onclick=()=>{try{localStorage.removeItem("muster-sb-skip");}catch(e){}login();};}
 const CSS=`#sbov{position:fixed;inset:0;z-index:100;overflow:auto;background:#0b0907;color:#f3ece4;font-family:"Source Sans 3",system-ui,sans-serif;-webkit-overflow-scrolling:touch}
-#sbov .bg{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 38%,rgba(11,9,7,0) 0%,rgba(11,9,7,.55) 60%,#0b0907 100%),linear-gradient(0deg,#0b0907 4%,rgba(11,9,7,.35) 45%,rgba(11,9,7,.7)),url(art/home/battle.jpg) center 30%/cover no-repeat;animation:sbz 18s ease-in-out infinite alternate}
+#sbov .bg{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 38%,rgba(11,9,7,0) 0%,rgba(11,9,7,.55) 60%,#0b0907 100%),linear-gradient(0deg,#0b0907 4%,rgba(11,9,7,.35) 45%,rgba(11,9,7,.7)),radial-gradient(circle at 25% 80%,rgba(255,110,40,.28),transparent 45%),radial-gradient(circle at 80% 70%,rgba(255,170,60,.2),transparent 42%),#0b0907;animation:sbz 18s ease-in-out infinite alternate}
 @keyframes sbz{from{transform:scale(1.05)}to{transform:scale(1.14) translateX(-2%)}}
 #sbov .ember{position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 20% 90%,rgba(255,110,40,.18),transparent 40%),radial-gradient(circle at 85% 95%,rgba(255,170,60,.14),transparent 38%)}
 #sbov .wrap{position:relative;min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 18px 34px;gap:14px}
@@ -2051,7 +2056,7 @@ const LOGO=`<svg class="logo" viewBox="0 0 92 106" aria-hidden="true"><defs><lin
 function login(){if(document.getElementById("sbov"))return;
   if(!document.getElementById("sbcss")){const st=document.createElement("style");st.id="sbcss";st.textContent=CSS;document.head.appendChild(st);}
   const o=document.createElement("div");o.id="sbov";
-  o.innerHTML=`<div class="bg"></div><div class="ember"></div><img class="fig figl" src="lead/marine.webp" alt=""><img class="fig figr" src="lead/chaos.webp" alt="">
+  o.innerHTML=`<div class="bg"></div><div class="ember"></div><img class="fig figl" src="${brandFig(0)}" alt=""><img class="fig figr" src="${brandFig(1)}" alt="">
   <div class="wrap">${LOGO}<h1>Muster</h1><div class="sbrule"></div><p class="tag">Paste your list · Muster your army</p>
   <form id="sbf"><input id="sbe" type="email" autocomplete="username" placeholder="Email" required><input id="sbp" type="password" autocomplete="current-password" placeholder="Password" required>
   <button type="submit" id="sbgo">Sign in</button><button type="button" id="sbmode" class="lk">New here? Create an account</button><div id="sbm"></div>
