@@ -1726,11 +1726,11 @@ function aiCutPrompt(L,P,kind){return aiPrompt(L,P,kind).replace(/, on a dark ru
 function aiPump(){while(AIART.run<3&&AIART.q.length){const j=AIART.q.shift();AIART.run++;
   (async()=>{try{
     const c=await caches.open("muster-ai-art");let r=await c.match(j.u);
-    if(!r){r=await fetch(j.u);if(!r.ok)throw 0;await c.put(j.u,r.clone());}
+    if(!r){r=await fetch(j.u);if(!r.ok){AIART.err=r.status+" "+(await r.text().catch(()=>"")).slice(0,200);AIART.fail=(AIART.fail||0)+1;if(AIART.fail>=3){AIART.q.length=0;}throw 0;}AIART.fail=0;AIART.err="";await c.put(j.u,r.clone());}
     let bl=await r.blob();if(j.cut){bl=await aiKey(bl);if(!bl)throw 0;}
     const ou=URL.createObjectURL(bl);AIART.ready[j.k]=ou;if(j.cut)AIART.cutSet.add(ou);
     clearTimeout(AIART.t);AIART.t=setTimeout(()=>{try{if(LISTS.view==="home"){renderHome();clearTimeout(FACE.t);setTimeout(faceoff,60);}else renderAll();}catch(e){}},400);
-  }catch(e){delete AIART.busy[j.k];}finally{AIART.run--;aiPump();}})();}}
+  }catch(e){delete AIART.busy[j.k];if(!AIART.err&&e!==0)AIART.err="Couldn't reach the art worker ("+String(e&&e.message||e).slice(0,80)+")";}finally{AIART.run--;if(AIART.err){try{renderStatus();}catch(_){}}aiPump();}})();}}
 const _genArtFor=genArtFor;
 genArtFor=function(lib){
   const o=_genArtFor(lib);if(!o||!AIART.url)return o;
@@ -1874,8 +1874,8 @@ function paintAll(btn){const P=parseList((LISTS.lists.find(x=>x.id===LISTS.activ
 function aiPanel(){
   const n=needs(),todo=n.units.length+n.dets.length+(n.fac?1:0),tn=textNeeds().length,qn=Object.keys(QUEUE).length,art=artNeeds();
   const desk=!!(SAMPLE&&MCP&&OWNER&&BROWSER_OK!==false);
-  const pa=paintInfo();
-  if(!todo&&!tn&&!(desk&&qn)&&!art.length&&!AIBUSY&&!AILOG.length&&!SYNCSTATE&&!pa)return "";
+  const pa=paintInfo(),pe=typeof AIART!=="undefined"&&AIART.err;
+  if(!todo&&!tn&&!(desk&&qn)&&!art.length&&!AIBUSY&&!AILOG.length&&!SYNCSTATE&&!pa&&!pe)return "";
   let h=`<div class="aip ${AIBUSY?"busy":""}">`;
   if(AIBUSY||AILOG.length)h+=`<h4>${AIBUSY?"Adding rules from Wahapedia…":"Library updated"}</h4>${AILOG.length?`<ul class="ailog">${AILOG.map(l=>`<li class="${l.s}">${esc(l.t)}</li>`).join("")}</ul>`:""}`;
   if(todo&&!AIBUSY){
@@ -1889,6 +1889,7 @@ function aiPanel(){
   const artLeft=art.length-artQ.length;
   if(!AIBUSY&&OWNER&&SYNC&&MCP&&(tn||qn||(SYNC.art&&artLeft)))h+=`<div class="row"><button class="btn" id="syncNow">Sync now</button>${desk&&(tn||qn)?`<button class="btn" id="aiText">Add wording here instead</button>`:""}</div>`;
   else if(!AIBUSY&&desk&&(tn||qn))h+=`<div class="row"><button class="btn pri" id="aiText">Add the wording</button></div>`;
+  if(typeof AIART!=="undefined"&&AIART.err&&AIART.url)h+=`<h4 class="arth">Art worker problem</h4><p class="note">${esc(AIART.err)}. Painted art can't be made until this clears, so the pixel art stays. If it mentions a limit it usually resets by the next day.</p>`;
   if(pa)h+=`<h4 class="arth">Painted art</h4><p class="note">${pa.left?`${pa.left} of ${pa.total} ${esc(pa.lab)} units still to paint. They are saved on this phone once made.`:`All ${pa.total} ${esc(pa.lab)} units are painted and saved on this phone.`}</p>${pa.left&&!pa.busy?`<div class="row"><button class="btn pri" id="paintAll">Paint all ${esc(pa.lab)} art</button></div>`:pa.busy?`<p class="note">Painting… ${pa.busy} to go. Keep this open.</p>`:""}`;
   if(SYNCSTATE)h+=`<p class="note syncmsg">${esc(SYNCSTATE)}</p>`;
   return h+`</div>`;
