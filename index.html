@@ -1695,7 +1695,7 @@ function aiPrompt(L,P,kind){
   const gear=(S.solo||chr||kind==="walker"||/carrying|spear|sword-warrior|exosuit|drone/.test(S.subject))?"":(kind==="heavy"?rk:(["melee","jump"].includes(kind)?mk:rk));
   const lone=S.solo?", the subject alone in frame":"";
   const novehic=S.solo&&["tank","hover","flyer","walker"].includes(kind)?", no soldiers or crew in frame, the whole machine visible":"";
-  const style="gothic grimdark far-future sci-fi oil painting, ornate skulls, eagles and purity seals, dramatic rim lighting, smoke and embers, painterly concept art, no text, no logo";
+  const style="a richly detailed gothic grimdark far-future sci-fi oil painting in the style of a master concept artist, intricate battle-worn weathered armour with scratches, chipped paint, rivets and gold filigree, ornate skulls, eagles and parchment purity seals, dramatic cinematic rim lighting, volumetric smoke and glowing embers, sharp focus, high detail, rich saturated colours, no text, no logo";
   return `${S.subject}${gear?", carrying "+gear:""}, ${livery}${S.pose?", "+S.pose:""}${lone}${novehic}, on a dark ruined battlefield, ${style}`;
 }
 async function aiKey(blob){
@@ -1721,7 +1721,7 @@ async function aiKey(blob){
   o.getContext("2d").drawImage(c,x0,y0,w,h,0,0,w,h);
   return await new Promise(res=>o.toBlob(res,"image/png"));
 }
-function aiCutPrompt(L,P,kind){return aiPrompt(L,P,kind).replace(/, on a dark ruined battlefield,.*$/,"")+", full body, isolated on a plain flat pure white studio background, no scenery, no ground, no floor shadow, even lighting, gothic grimdark far-future sci-fi oil painting, painterly concept art, no text, no logo";}
+function aiCutPrompt(L,P,kind){return aiPrompt(L,P,kind).replace(/, on a dark ruined battlefield,.*$/,"")+", full body, isolated on a plain flat pure white studio background, no scenery, no ground, no floor shadow, even lighting, a richly detailed gothic grimdark far-future sci-fi oil painting by a master concept artist, intricate battle-worn weathered armour with scratches, chipped paint and gold filigree, sharp focus, high detail, rich saturated colours, no text, no logo";}
 function aiPump(){while(AIART.run<3&&AIART.q.length){const j=AIART.q.shift();AIART.run++;
   (async()=>{try{
     const c=await caches.open("muster-ai-art");let r=await c.match(j.u);
