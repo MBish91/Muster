@@ -1906,15 +1906,50 @@ function bar(){let b=document.getElementById("sbbar");if(!b){b=document.createEl
   const o=document.getElementById("sbout"),i=document.getElementById("sbin");
   if(o)o.onclick=()=>{SES=null;try{localStorage.removeItem("muster-sb");}catch(e){}login();bar();};
   if(i)i.onclick=()=>{try{localStorage.removeItem("muster-sb-skip");}catch(e){}login();};}
-function login(){if(document.getElementById("sbov"))return;const o=document.createElement("div");o.id="sbov";
-  o.style.cssText="position:fixed;inset:0;z-index:100;background:#120b0c;color:#e9dccb;display:flex;align-items:center;justify-content:center;font-family:system-ui;padding:20px";
-  o.innerHTML=`<form id="sbf" style="width:100%;max-width:320px;display:flex;flex-direction:column;gap:10px"><h1 style="margin:0 0 4px;font-size:28px;letter-spacing:.08em">MUSTER</h1><p style="margin:0 0 8px;color:#b9a98f;font-size:14px">Sign in to keep your armies on every device.</p>
-  <input id="sbe" type="email" autocomplete="username" placeholder="Email" required style="padding:12px;border-radius:8px;border:1px solid #6d5035;background:#1c1213;color:inherit;font-size:16px">
-  <input id="sbp" type="password" autocomplete="current-password" placeholder="Password" required style="padding:12px;border-radius:8px;border:1px solid #6d5035;background:#1c1213;color:inherit;font-size:16px">
-  <button type="submit" id="sbgo" style="padding:12px;border-radius:8px;border:0;background:#c9a24a;color:#120b0c;font-weight:700;font-size:16px">Sign in</button>
-  <button type="button" id="sbmode" style="background:none;border:0;color:#c9a24a;font-size:14px">New here? Create an account</button>
-  <div id="sbm" style="min-height:18px;color:#e58a8a;font-size:13px"></div>
-  <button type="button" id="sbs" style="background:none;border:0;color:#b9a98f;font-size:13px;text-decoration:underline">Use without an account (this device only)</button></form>`;
+const CSS=`#sbov{position:fixed;inset:0;z-index:100;overflow:auto;background:#0b0907;color:#f3ece4;font-family:"Source Sans 3",system-ui,sans-serif;-webkit-overflow-scrolling:touch}
+#sbov .bg{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 38%,rgba(11,9,7,0) 0%,rgba(11,9,7,.55) 60%,#0b0907 100%),linear-gradient(0deg,#0b0907 4%,rgba(11,9,7,.35) 45%,rgba(11,9,7,.7)),url(art/home/battle.jpg) center 30%/cover no-repeat;animation:sbz 18s ease-in-out infinite alternate}
+@keyframes sbz{from{transform:scale(1.05)}to{transform:scale(1.14) translateX(-2%)}}
+#sbov .ember{position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 20% 90%,rgba(255,110,40,.18),transparent 40%),radial-gradient(circle at 85% 95%,rgba(255,170,60,.14),transparent 38%)}
+#sbov .wrap{position:relative;min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 18px 34px;gap:14px}
+#sbov .fig{position:fixed;bottom:0;height:min(58vh,430px);width:auto;pointer-events:none;filter:drop-shadow(0 10px 14px rgba(0,0,0,.85));opacity:.95}
+#sbov .figl{left:-6%}#sbov .figr{right:-6%;transform:scaleX(-1)}
+@media(max-width:560px){#sbov .fig{height:34vh;opacity:.55}#sbov .figl{left:-14%}#sbov .figr{right:-14%}}
+#sbov .logo{width:92px;height:106px;filter:drop-shadow(0 4px 14px rgba(224,172,69,.45));animation:sbf 3.2s ease-in-out infinite alternate}
+@keyframes sbf{from{transform:translateY(0)}to{transform:translateY(-4px)}}
+#sbov h1{margin:0;font:italic 800 clamp(46px,13vw,68px)/.95 "Barlow Condensed",Impact,sans-serif;letter-spacing:.12em;text-transform:uppercase;text-align:center;
+  background:linear-gradient(180deg,#fff3c4 0%,#e0ac45 48%,#8d5a1c 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 0 rgba(0,0,0,.6)) drop-shadow(0 0 18px rgba(224,140,40,.4))}
+#sbov .tag{margin:0;font:600 12px "Barlow Condensed",sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#d7c7a8;text-align:center}
+#sbov .sbrule{width:150px;height:2px;background:linear-gradient(90deg,transparent,#e0ac45,transparent);margin:2px 0 4px}
+#sbov form{position:relative;width:100%;max-width:340px;display:flex;flex-direction:column;gap:10px;padding:20px 18px 16px;border-radius:16px;
+  background:linear-gradient(160deg,rgba(32,22,20,.82),rgba(14,10,9,.9));border:1px solid rgba(224,172,69,.45);box-shadow:0 18px 50px rgba(0,0,0,.65),inset 0 0 0 1px rgba(255,255,255,.04);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+#sbov form:before,#sbov form:after{content:"";position:absolute;width:16px;height:16px;border:2px solid #e0ac45;pointer-events:none}
+#sbov form:before{left:-1px;top:-1px;border-right:0;border-bottom:0;border-top-left-radius:16px}
+#sbov form:after{right:-1px;bottom:-1px;border-left:0;border-top:0;border-bottom-right-radius:16px}
+#sbov input{padding:13px 14px;border-radius:9px;border:1px solid #5a4330;background:rgba(10,7,6,.75);color:#f3ece4;font-size:16px;outline:0}
+#sbov input:focus{border-color:#e0ac45;box-shadow:0 0 0 3px rgba(224,172,69,.2)}
+#sbov input::placeholder{color:#8f8168}
+#sbov #sbgo{padding:13px;border-radius:9px;border:0;cursor:pointer;font:italic 800 19px "Barlow Condensed",sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#1a0f08;
+  background:linear-gradient(180deg,#ffd98a,#e0ac45 55%,#b3761f);box-shadow:0 3px 0 #6b4310,0 8px 18px rgba(224,140,40,.35)}
+#sbov #sbgo:active{transform:translateY(2px);box-shadow:0 1px 0 #6b4310}
+#sbov .lk{background:none;border:0;cursor:pointer;font-size:14px;color:#e0ac45;padding:4px}
+#sbov #sbs{color:#a8977a;font-size:13px;text-decoration:underline}
+#sbov #sbm{min-height:18px;font-size:13px;text-align:center;color:#e58a8a}
+#sbov .foot{position:relative;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#8f8168;text-align:center}`;
+const LOGO=`<svg class="logo" viewBox="0 0 92 106" aria-hidden="true"><defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3c4"/><stop offset=".5" stop-color="#e0ac45"/><stop offset="1" stop-color="#8d5a1c"/></linearGradient><linearGradient id="sf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a1216"/><stop offset="1" stop-color="#120a0b"/></linearGradient></defs>
+<path d="M46 3 L87 16 V54 C87 78 68 94 46 103 C24 94 5 78 5 54 V16 Z" fill="url(#sf)" stroke="url(#sg)" stroke-width="3.5" stroke-linejoin="round"/>
+<path d="M46 12 L78 22 V54 C78 73 63 86 46 94 C29 86 14 73 14 54 V22 Z" fill="none" stroke="#e0ac45" stroke-opacity=".5" stroke-width="1.2"/>
+<path d="M30 76 L46 8 L62 76" fill="none" stroke="#a51c1c" stroke-opacity=".55" stroke-width="2"/>
+<text x="46" y="70" text-anchor="middle" font-family="Barlow Condensed,Impact,sans-serif" font-style="italic" font-weight="800" font-size="58" fill="url(#sg)" stroke="#2a1608" stroke-width="1.2" paint-order="stroke">M</text>
+<path d="M30 80 H62" stroke="#e0ac45" stroke-width="2" stroke-linecap="round"/><circle cx="46" cy="84" r="2.4" fill="#e0ac45"/></svg>`;
+function login(){if(document.getElementById("sbov"))return;
+  if(!document.getElementById("sbcss")){const st=document.createElement("style");st.id="sbcss";st.textContent=CSS;document.head.appendChild(st);}
+  const o=document.createElement("div");o.id="sbov";
+  o.innerHTML=`<div class="bg"></div><div class="ember"></div><img class="fig figl" src="lead/marine.webp" alt=""><img class="fig figr" src="lead/chaos.webp" alt="">
+  <div class="wrap">${LOGO}<h1>Muster</h1><div class="sbrule"></div><p class="tag">Paste your list · Muster your army</p>
+  <form id="sbf"><input id="sbe" type="email" autocomplete="username" placeholder="Email" required><input id="sbp" type="password" autocomplete="current-password" placeholder="Password" required>
+  <button type="submit" id="sbgo">Sign in</button><button type="button" id="sbmode" class="lk">New here? Create an account</button><div id="sbm"></div>
+  <button type="button" id="sbs" class="lk">Use without an account (this device only)</button></form>
+  <div class="foot">Warhammer 40,000 army reference</div></div>`;
   document.body.appendChild(o);
   document.getElementById("sbs").onclick=()=>{try{localStorage.setItem("muster-sb-skip","1");}catch(e){}o.remove();bar();};
   let signup=false;const mb=document.getElementById("sbmode"),go=document.getElementById("sbgo"),pw=document.getElementById("sbp");
