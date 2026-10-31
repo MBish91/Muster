@@ -1602,6 +1602,35 @@ function pxCut(P,kind,L){
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w*px} ${h*px}" width="${w*px}" height="${h*px}" shape-rendering="crispEdges"><g transform="translate(${-x0*px} ${-y0*px})">${pSvg(G,P,px)}</g></svg>`;
 }
 
+/* ---------- painted art from the user's free Cloudflare worker; pixel art shows until each picture arrives ---------- */
+const AIART={url:(window.MUSTER_SB&&window.MUSTER_SB.art)||"",ready:{},busy:{},q:[],run:0,t:null};
+function aiHue(h){h=gHex(h,"444444");const n=parseInt(h,16),r=n>>16&255,g=n>>8&255,b=n&255,mx=Math.max(r,g,b),mn=Math.min(r,g,b);
+  if(mx<60)return "black";if(mx-mn<28)return mx>190?"white":mx>110?"grey":"dark grey";
+  let H;if(mx===r)H=((g-b)/(mx-mn)+6)%6;else if(mx===g)H=(b-r)/(mx-mn)+2;else H=(r-g)/(mx-mn)+4;H*=60;
+  return H<20||H>=340?"crimson red":H<45?"orange":H<70?"gold":H<160?"green":H<200?"teal":H<255?"blue":H<300?"purple":"magenta";}
+function aiPrompt(L,P,kind){
+  const w=pWpn(L),arm=aiHue(P.arm),tr=aiHue(P.trim);
+  const wp={flamer:"a flamethrower",melta:"a melta cutter",plasma:"a glowing plasma rifle",heavy:"a heavy cannon",rifle:"a bolt rifle",pistol:"a sidearm pistol",sword:"a glowing power sword",chain:"a roaring chainsword",hammer:"a huge power hammer",axe:"a power axe",spear:"a power spear",fist:"a giant power fist",claws:"energy claws"};
+  const wk=(["melee","hero","jump"].includes(kind)&&w.hasMelee)?w.melee:(w.ranged||w.melee);
+  const sub={rifle:"a far-future armoured soldier in heavy power armour",melee:"a ferocious armoured close-combat warrior in heavy power armour",heavy:"a hulking super-heavy armoured veteran in massive bulky armour",hero:"a heroic armoured commander in ornate power armour with a flowing cloak",jump:"an armoured assault trooper with a jump pack leaping into battle",bike:"an armoured rider on a hulking war-bike",walker:"a towering armoured combat walker with a cannon arm and a clawed fist",tank:"a massive armoured battle tank with a large main gun and tracks",hover:"a sleek armoured hover-tank with anti-gravity engines",flyer:"an armoured attack jet gunship flying at speed",beast:"a huge fanged armoured war-beast"}[kind]||"an armoured soldier";
+  const many=pCount(L)>2&&!["tank","hover","flyer","walker","beast","hero"].includes(kind)?" with a squad advancing behind":"";
+  return `epic dark sci-fi oil painting, ${sub}${many}, armour in ${arm} with ${tr} trim, wielding ${wp[wk]||"weapons"}, grimdark battlefield, dramatic rim lighting, smoke and embers, painterly concept art, wide cinematic composition, no text, no logo`;
+}
+function aiPump(){while(AIART.run<3&&AIART.q.length){const j=AIART.q.shift();AIART.run++;
+  (async()=>{try{
+    const c=await caches.open("muster-ai-art");let r=await c.match(j.u);
+    if(!r){r=await fetch(j.u);if(!r.ok)throw 0;await c.put(j.u,r.clone());}
+    AIART.ready[j.k]=URL.createObjectURL(await r.blob());
+    clearTimeout(AIART.t);AIART.t=setTimeout(()=>{try{if(LISTS.view==="home")renderHome();else renderAll();}catch(e){}},400);
+  }catch(e){delete AIART.busy[j.k];}finally{AIART.run--;aiPump();}})();}}
+const _genArtFor=genArtFor;
+genArtFor=function(lib){
+  const o=_genArtFor(lib);if(!o||!AIART.url)return o;
+  const k=lib;if(AIART.ready[k])return {...o,s:AIART.ready[k],w:true,ai:true};
+  if(!AIART.busy[k]){AIART.busy[k]=1;const L=LIB[lib];if(L){const P=gPal(((WH.bySlug[L.whFac]||{}).colors)||null);
+    AIART.q.push({k,u:AIART.url+(AIART.url.includes("?")?"&":"?")+"p="+encodeURIComponent(aiPrompt(L,P,o.kind))});aiPump();}}
+  return o;};
+
 /* ---------- AI LIBRARY (Claude drafts + shared store) ---------- */
 const slug=s=>nrm(s).replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,80)||"x";
 const ARTDB={},FACDB={};
