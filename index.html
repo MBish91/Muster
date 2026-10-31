@@ -467,7 +467,7 @@ button.cg-h{width:100%;background:none;border:0;text-align:left;-webkit-appearan
 .lact{display:flex;gap:6px;flex:none}.badge{display:inline-flex;align-items:center;height:32px;padding:0 10px;border-radius:var(--r-pill);background:var(--surface-2);font:600 12px var(--cond);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .gearl{margin:6px 0 0;font-size:12.5px;color:var(--muted)}
 </style>
-<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#120b0c"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Muster"><link rel="apple-touch-icon" href="icon-192.png"></head>
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#120b0c"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Muster"><link rel="apple-touch-icon" href="icon-192.png"><script src="config.js"></script></head>
 <body>
 <header class="top">
   <div class="brand">
@@ -1877,6 +1877,51 @@ document.documentElement.dataset.theme="light";try{const th=localStorage.getItem
 if(LISTS.view==="list"&&LISTS.lists.find(x=>x.id===LISTS.active)){loadList(LISTS.active);renderAll();window._cp=S.cp;setView("list");}else{if(LISTS.active&&LISTS.lists.find(x=>x.id===LISTS.active)){loadList(LISTS.active);renderAll();}setView("home");}requestAnimationFrame(moveInd);document.fonts&&document.fonts.ready.then(moveInd);
 whBoot();
 if(window.claude&&claude.use)initCaps();
+
+/* ---------- standalone cloud (Supabase): invite-only login, one private row per person ---------- */
+(function(){
+const CFG=window.MUSTER_SB;if(!CFG||!CFG.url||!CFG.key||(window.claude&&claude.use))return;
+const U=CFG.url.replace(/\/$/,""),K=CFG.key;let SES=null,SKIP=false;
+try{SES=JSON.parse(localStorage.getItem("muster-sb")||"null");SKIP=localStorage.getItem("muster-sb-skip")==="1";}catch(e){}
+const hd=t=>({apikey:K,"Content-Type":"application/json",Authorization:"Bearer "+(t||K)});
+async function auth(path,body){const r=await fetch(U+"/auth/v1/"+path,{method:"POST",headers:hd(),body:JSON.stringify(body)});let j={};try{j=await r.json();}catch(e){}
+  if(!r.ok)throw new Error(j.error_description||j.msg||j.message||"Sign-in failed");return j;}
+function keep(j){SES={access:j.access_token,refresh:j.refresh_token,exp:Date.now()+((j.expires_in||3600)-60)*1000,uid:(j.user&&j.user.id)||(SES&&SES.uid),email:(j.user&&j.user.email)||(SES&&SES.email)};
+  try{localStorage.setItem("muster-sb",JSON.stringify(SES));}catch(e){}}
+async function token(){if(!SES)return null;
+  if(Date.now()>SES.exp){try{keep(await auth("token?grant_type=refresh_token",{refresh_token:SES.refresh}));}catch(e){if(navigator.onLine!==false){SES=null;try{localStorage.removeItem("muster-sb");}catch(_){}}return null;}}
+  return SES&&SES.access;}
+const shim={collection:()=>({doc:()=>({
+  async get(){const t=await token();if(!t)throw new Error("signed out");
+    const r=await fetch(U+"/rest/v1/lists?select=data&user_id=eq."+SES.uid,{headers:hd(t)});if(!r.ok)throw new Error("load failed");const a=await r.json();
+    return {exists:a.length>0,data:()=>a[0]&&a[0].data};},
+  async set(o){const t=await token();if(!t)throw new Error("signed out");
+    const r=await fetch(U+"/rest/v1/lists",{method:"POST",headers:{...hd(t),Prefer:"resolution=merge-duplicates"},body:JSON.stringify({user_id:SES.uid,data:o,updated_at:new Date().toISOString()})});
+    if(!r.ok)throw new Error("save failed");}})})};
+async function pull(){if(!SES)return;const keepDB=DB,keepU=USER;DB=shim;USER={id:async()=>SES&&SES.uid,isOwner:async()=>false};
+  try{await cloudLists();}catch(e){}finally{DB=keepDB;USER=keepU;}}
+function bar(){let b=document.getElementById("sbbar");if(!b){b=document.createElement("div");b.id="sbbar";
+  b.style.cssText="position:fixed;left:8px;bottom:8px;z-index:50;font:12px system-ui;background:rgba(18,11,12,.85);color:#e9dccb;border:1px solid #6d5035;border-radius:14px;padding:5px 10px;display:flex;gap:8px;align-items:center";document.body.appendChild(b);}
+  b.innerHTML=SES?`<span>${(SES.email||"").replace(/</g,"&lt;")}</span><button id="sbout" style="background:none;border:0;color:#c9a24a;font:inherit;cursor:pointer">Sign out</button>`:`<span>Local only</span><button id="sbin" style="background:none;border:0;color:#c9a24a;font:inherit;cursor:pointer">Sign in</button>`;
+  const o=document.getElementById("sbout"),i=document.getElementById("sbin");
+  if(o)o.onclick=()=>{SES=null;try{localStorage.removeItem("muster-sb");}catch(e){}login();bar();};
+  if(i)i.onclick=()=>{try{localStorage.removeItem("muster-sb-skip");}catch(e){}login();};}
+function login(){if(document.getElementById("sbov"))return;const o=document.createElement("div");o.id="sbov";
+  o.style.cssText="position:fixed;inset:0;z-index:100;background:#120b0c;color:#e9dccb;display:flex;align-items:center;justify-content:center;font-family:system-ui;padding:20px";
+  o.innerHTML=`<form id="sbf" style="width:100%;max-width:320px;display:flex;flex-direction:column;gap:10px"><h1 style="margin:0 0 4px;font-size:28px;letter-spacing:.08em">MUSTER</h1><p style="margin:0 0 8px;color:#b9a98f;font-size:14px">Sign in to keep your armies on every device.</p>
+  <input id="sbe" type="email" autocomplete="username" placeholder="Email" required style="padding:12px;border-radius:8px;border:1px solid #6d5035;background:#1c1213;color:inherit;font-size:16px">
+  <input id="sbp" type="password" autocomplete="current-password" placeholder="Password" required style="padding:12px;border-radius:8px;border:1px solid #6d5035;background:#1c1213;color:inherit;font-size:16px">
+  <button type="submit" style="padding:12px;border-radius:8px;border:0;background:#c9a24a;color:#120b0c;font-weight:700;font-size:16px">Sign in</button>
+  <div id="sbm" style="min-height:18px;color:#e58a8a;font-size:13px"></div>
+  <button type="button" id="sbs" style="background:none;border:0;color:#b9a98f;font-size:13px;text-decoration:underline">Use without an account (this device only)</button></form>`;
+  document.body.appendChild(o);
+  document.getElementById("sbs").onclick=()=>{try{localStorage.setItem("muster-sb-skip","1");}catch(e){}o.remove();bar();};
+  document.getElementById("sbf").onsubmit=async ev=>{ev.preventDefault();const m=document.getElementById("sbm");m.textContent="Signing in…";
+    try{keep(await auth("token?grant_type=password",{email:document.getElementById("sbe").value.trim(),password:document.getElementById("sbp").value}));o.remove();bar();await pull();}catch(e){m.textContent=e.message;}};}
+function start(){bar();if(!SES&&!SKIP)login();else pull();
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden&&SES)pull();});}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
+})();
 
 </script>
 <script>if("serviceWorker"in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("sw.js").catch(()=>{});</script></body>
