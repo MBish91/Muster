@@ -1630,6 +1630,13 @@ genArtFor=function(lib){
   if(!AIART.busy[k]){AIART.busy[k]=1;const L=LIB[lib];if(L){const P=gPal(((WH.bySlug[L.whFac]||{}).colors)||null);
     AIART.q.push({k,u:AIART.url+(AIART.url.includes("?")?"&":"?")+"p="+encodeURIComponent(aiPrompt(L,P,o.kind))});aiPump();}}
   return o;};
+/* branding backdrop: one painted battle scene for the home banner and sign-in screen */
+(async function(){if(!AIART.url)return;
+  const u=AIART.url+"?p="+encodeURIComponent("epic dark sci-fi oil painting, two vast armies of armoured soldiers and war machines clashing on a burning ruined battlefield, dramatic rim lighting, smoke and embers, glowing sky, painterly concept art, wide cinematic panorama, no text, no logo");
+  try{const c=await caches.open("muster-ai-art");let r=await c.match(u);if(!r){r=await fetch(u);if(!r.ok)return;await c.put(u,r.clone());}
+    const url=URL.createObjectURL(await r.blob());const st=document.createElement("style");
+    st.textContent=`.homehero .hbg{background:linear-gradient(0deg,rgba(11,9,7,1) 6%,rgba(11,9,7,.6) 42%,rgba(11,9,7,.2) 72%,rgba(11,9,7,.5)),url(${url}) center 35%/cover no-repeat !important}#sbov .bg{background:radial-gradient(ellipse at 50% 38%,rgba(11,9,7,0) 0%,rgba(11,9,7,.55) 60%,#0b0907 100%),linear-gradient(0deg,#0b0907 4%,rgba(11,9,7,.35) 45%,rgba(11,9,7,.7)),url(${url}) center 30%/cover no-repeat !important}`;
+    document.head.appendChild(st);}catch(e){}})();
 
 /* ---------- AI LIBRARY (Claude drafts + shared store) ---------- */
 const slug=s=>nrm(s).replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,80)||"x";
