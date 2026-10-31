@@ -1609,12 +1609,41 @@ function aiHue(h){h=gHex(h,"444444");const n=parseInt(h,16),r=n>>16&255,g=n>>8&2
   let H;if(mx===r)H=((g-b)/(mx-mn)+6)%6;else if(mx===g)H=(b-r)/(mx-mn)+2;else H=(r-g)/(mx-mn)+4;H*=60;
   return H<20||H>=340?"crimson red":H<45?"orange":H<70?"gold":H<160?"green":H<200?"teal":H<255?"blue":H<300?"purple":"magenta";}
 function aiPrompt(L,P,kind){
-  const w=pWpn(L),arm=aiHue(P.arm),tr=aiHue(P.trim);
-  const wp={flamer:"a flamethrower",melta:"a melta cutter",plasma:"a glowing plasma rifle",heavy:"a heavy cannon",rifle:"a bolt rifle",pistol:"a sidearm pistol",sword:"a glowing power sword",chain:"a roaring chainsword",hammer:"a huge power hammer",axe:"a power axe",spear:"a power spear",fist:"a giant power fist",claws:"energy claws"};
-  const wk=(["melee","hero","jump"].includes(kind)&&w.hasMelee)?w.melee:(w.ranged||w.melee);
-  const sub={rifle:"a far-future armoured soldier in heavy power armour",melee:"a ferocious armoured close-combat warrior in heavy power armour",heavy:"a hulking super-heavy armoured veteran in massive bulky armour",hero:"a heroic armoured commander in ornate power armour with a flowing cloak",jump:"an armoured assault trooper with a jump pack leaping into battle",bike:"an armoured rider on a hulking war-bike",walker:"a towering armoured combat walker with a cannon arm and a clawed fist",tank:"a massive armoured battle tank with a large main gun and tracks",hover:"a sleek armoured hover-tank with anti-gravity engines",flyer:"an armoured attack jet gunship flying at speed",beast:"a huge fanged armoured war-beast"}[kind]||"an armoured soldier";
-  const many=pCount(L)>2&&!["tank","hover","flyer","walker","beast","hero"].includes(kind)?" with a squad advancing behind":"";
-  return `epic dark sci-fi oil painting, ${sub}${many}, armour in ${arm} with ${tr} trim, wielding ${wp[wk]||"weapons"}, grimdark battlefield, dramatic rim lighting, smoke and embers, painterly concept art, wide cinematic composition, no text, no logo`;
+  const w=pWpn(L),arm=aiHue(P.arm),tr=aiHue(P.trim),n=String(L.name||"").toLowerCase(),
+    kw=(Array.isArray(L.keywords)?L.keywords.join(" "):String(L.keywords||"")).toLowerCase(),has=r=>r.test(n)||r.test(kw),cnt0=pCount(L),cnt=(L.comp&&L.comp.length)?cnt0:(has(/squad|brethren|sodality|veterans|company|guard|terminators|intercessors|marines|boyz|warriors|cultists|hounds|blades/)&&!has(/\bcharacter\b/)?3:1);
+  const WD={flamer:"a nozzled flamethrower spitting a jet of fire",melta:"a short-barrelled melta cutter with a glowing white-hot nozzle",plasma:"a plasma rifle with glowing blue coils",heavy:"a large heavy cannon",rifle:"a chunky bolt rifle",pistol:"a bolt pistol",sword:"a glowing power sword",chain:"a snarling chainsword with spinning teeth",hammer:"a massive crackling power hammer",axe:"a crackling power axe",spear:"a long power spear",fist:"an oversized armoured power fist",claws:"two sets of energy claws"};
+  const rk=w.ranged&&w.ranged!=="pistol"?WD[w.ranged]:"",mk=w.hasMelee?WD[w.melee]:"";
+  const melee=["melee","hero","jump"].includes(kind);
+  const gear=(melee?[mk,rk&&"a ranged weapon on the hip"]:[rk,w.melee&&mk&&/fist|claw|hammer|axe|sword|chain|spear/.test(w.melee)&&kind==="heavy"?mk:""]).filter(Boolean).join(" and ");
+  const livery=`painted ${arm} with ${tr} trim and edging`;
+  const style="gothic grimdark far-future sci-fi oil painting, ornate skulls, eagles and purity seals, dramatic rim lighting, smoke and embers, painterly concept art, no text, no logo";
+  const num=cnt>=5?"five":cnt>=3?"three":"two";
+  let sub;
+  if(kind==="tank"||kind==="hover"){
+    const big=has(/land raider|baneblade|leman russ|crusader|redeemer|achilles|gladiator|castellan|executioner|spartan|vindicator|predator/);
+    const tr2=has(/transport/)&&!big;
+    sub=(kind==="hover"&&has(/impulsor|repulsor|transport|rhino|razorback/)?"a single armoured troop transport hovering on glowing anti-gravity engines, with an open crew bay and a roof-mounted storm gun":kind==="hover"?"a single armoured hover-tank floating on glowing anti-gravity engines":tr2?"a single boxy armoured troop transport with a rear assault ramp and a roof-mounted storm gun":big?"a single enormous slab-sided armoured assault tank with heavy side-mounted sponson cannons and a large turret":"a single armoured battle tank with a large turret and a long main gun")+`, ${livery}, ${w.twin?"twin-barrelled main weapon":"single long barrel"}${kind==="tank"?", heavy tracks":""}, the vehicle alone with no soldiers in frame, full vehicle visible, three-quarter view`;
+  }else if(kind==="walker"){
+    sub=(has(/knight|war ?dog|titan|warsuit/)?"a single colossal bipedal war machine towering over ruins":"a single walking armoured war machine on two stubby legs with a sarcophagus-like torso, a big cannon for one arm and a clawed power fist for the other")+`, ${livery}, no pilot visible, the machine alone, full body, low heroic angle`;
+  }else if(kind==="flyer"){
+    sub=`a single armoured gunship aircraft with swept wings and glowing engines flying fast through a stormy burning sky, ${livery}, the aircraft only, no soldiers, side three-quarter view`;
+  }else if(kind==="bike"){
+    sub=`${num==="five"||num==="three"?"three":"two"} armoured warriors riding heavy armoured motorbikes with mounted guns, ${livery}, charging toward the viewer, ${gear}`;
+  }else if(kind==="beast"){
+    sub=`a huge fanged armoured war-beast with snarling jaws, ${livery}, full body, alone`;
+  }else if(kind==="hero"||has(/\bcharacter\b|epic hero/)){
+    const role=has(/chaplain/)?"a fearsome armoured war-priest with a skull-faced helm holding a crozius staff":has(/librarian|psyker/)?"an armoured psychic warrior wreathed in blue lightning holding a force staff":has(/techmarine|tech-?priest|enginseer/)?"an armoured tech-adept with mechanical servo-arms":has(/apothecary/)?"an armoured field-surgeon in white armour with a medical device":has(/ancient|standard/)?"an armoured standard-bearer holding a huge tattered banner":"a single heroic armoured commander with a flowing cloak and a plumed helm";
+    sub=`${role}, ${has(/terminator|gravis|centurion/)?"in massive bulky heavy armour, ":""}${livery}, ${gear}, one lone figure, full body, heroic low angle`;
+  }else if(kind==="heavy"){
+    sub=`${cnt>1?num+" hulking super-heavy armoured veterans":"a single hulking super-heavy armoured veteran"} in massive bulky armour, ${livery}, ${gear}, standing shoulder to shoulder in formation, all identical, full bodies`;
+  }else if(kind==="jump"){
+    sub=`${cnt>1?num+" armoured assault troopers":"a single armoured assault trooper"} with roaring jump packs leaping through the air, ${livery}, ${gear}, full bodies`;
+  }else if(kind==="melee"){
+    sub=`${cnt>1?num+" ferocious armoured close-combat warriors":"a single ferocious armoured close-combat warrior"} in heavy power armour charging forward, ${livery}, ${gear}, all identical, full bodies`;
+  }else{
+    sub=`${cnt>1?num+" armoured soldiers":"a single armoured soldier"} in heavy power armour ${cnt>1?"advancing in formation":"advancing"}, ${livery}, ${gear}, all identical, full bodies`;
+  }
+  return `${sub}, centred on a dark ruined battlefield, ${style}`;
 }
 function aiPump(){while(AIART.run<3&&AIART.q.length){const j=AIART.q.shift();AIART.run++;
   (async()=>{try{
