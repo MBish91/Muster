@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#1c262c">
+<meta name="x-old-theme" content="#1c262c">
 <title>Muster</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;0,800;1,800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
 /* =========================================================
    TOKENS
@@ -527,8 +527,73 @@ main section.enter{animation:secIn .28s cubic-bezier(.16,1,.3,1)}
 .btn,.uhead,.aopen,.dsd>summary{transition:background-color .15s,transform .15s}
 .btn:active{transform:scale(.97)}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* ===== NEO: sleek futuristic theme ===== */
+:root,:root[data-theme],:root[data-faction]{
+ --neon:#3ee6ff;--neon2:#8b7bff;--glow:0 0 0 1px rgba(62,230,255,.35),0 0 24px -6px rgba(62,230,255,.45);
+ --bg:#05070b!important;--surface:rgba(255,255,255,.035)!important;--surface-2:rgba(255,255,255,.055)!important;--surface-3:rgba(255,255,255,.08)!important;
+ --line:rgba(255,255,255,.075)!important;--line-strong:rgba(255,255,255,.16)!important;--ink:#e9eef6!important;--ink-2:#c3cbd8!important;--muted:#7f8a9c!important;
+ --head:rgba(7,10,15,.72)!important;--seal:#3ee6ff!important;--seal-ink:#03141a!important;--seal-soft:rgba(62,230,255,.12)!important;--acc:#3ee6ff!important;--acc2:#3ee6ff!important;--stripe:#3ee6ff!important;--kw:#7fd8ff!important;
+ --parch:rgba(255,255,255,.04)!important;--parch-ink:#e9eef6!important;--tile:rgba(255,255,255,.06)!important;--tile-ink:#e9eef6!important;
+ --sans:"Inter",system-ui,-apple-system,sans-serif!important;--cond:"Space Grotesk","Inter",system-ui,sans-serif!important;--serif:"Space Grotesk","Inter",sans-serif!important;--mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+ --sh-1:none!important;--sh-2:0 10px 40px -18px rgba(0,0,0,.9)!important;color-scheme:dark}
+html,body{background:#05070b!important;color:var(--ink)}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+ background:radial-gradient(900px 500px at 85% -10%,rgba(62,230,255,.10),transparent 60%),radial-gradient(700px 500px at -10% 110%,rgba(139,123,255,.10),transparent 60%),
+ linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px) 0 0/100% 32px,linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px) 0 0/32px 100%;
+ -webkit-mask-image:linear-gradient(#000,rgba(0,0,0,.35));mask-image:linear-gradient(#000,rgba(0,0,0,.35))}
+#themeBtn{display:none!important}
+header.top{background:rgba(6,9,14,.72)!important;-webkit-backdrop-filter:blur(18px) saturate(1.5);backdrop-filter:blur(18px) saturate(1.5);border-bottom:1px solid rgba(255,255,255,.06);box-shadow:none!important}
+.top h1,.brand h1{font:600 18px/1.15 var(--cond)!important;letter-spacing:.01em;color:#fff}
+.brand p{color:var(--muted)!important}
+.backbtn{background:rgba(255,255,255,.06)!important;border:1px solid rgba(255,255,255,.1)!important;border-radius:12px!important}
+.tabs button{font:500 13px var(--cond)!important;letter-spacing:.12em!important;text-transform:uppercase;color:#6f7a8c!important;transition:color .2s}
+.tabs button[aria-selected="true"]{color:#fff!important}
+.tabs .ind{height:2px!important;border-radius:2px!important;background:var(--neon)!important;box-shadow:0 0 12px 1px rgba(62,230,255,.8)}
+#gbar{border-top:1px solid rgba(255,255,255,.05)}
+#gbar .g{color:#7f8a9c;font:500 11px var(--cond);letter-spacing:.14em}
+#gbar .g b{font:700 20px var(--mono);color:#fff;text-shadow:0 0 14px rgba(62,230,255,.55)}
+#gbar button{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);border-radius:10px;color:#cfe9ff}
+#gbar button:active{background:rgba(62,230,255,.18);border-color:rgba(62,230,255,.5)}
+.sect,.sect span,h2.sect{font:600 11px var(--cond)!important;letter-spacing:.18em!important;text-transform:uppercase;color:#8a95a8!important}
+.sect span::before{content:"";display:inline-block;width:6px;height:6px;margin-right:9px;border-radius:1px;background:var(--neon);box-shadow:0 0 8px var(--neon);vertical-align:1px}
+.sect::after,.cg-h::after{background:linear-gradient(90deg,rgba(255,255,255,.12),transparent)!important}
+.unit,.acard,.panel,.rule,.qi,.atk,.tw,.wounds,.enhbox,.aip,.lcard,.tot div,.obs button{background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.018))!important;border:1px solid rgba(255,255,255,.075)!important;border-radius:16px!important;box-shadow:none!important}
+.unit{transition:border-color .25s,box-shadow .25s}
+.unit[open]{border-color:rgba(62,230,255,.32)!important;box-shadow:0 0 0 1px rgba(62,230,255,.12),0 18px 50px -24px rgba(62,230,255,.35)!important}
+.uhead .nm b,.aopen b{font:600 17px/1.2 var(--cond)!important;letter-spacing:.005em;color:#f2f6fb}
+.uhead .pts,.ustats b,.tot b,.big .v b,.rounds button,td.ac b,.tw td:not(:first-child){font-family:var(--mono)!important}
+.tw td:first-child{font-family:var(--sans)!important}
+.uhead .pts{font-weight:700;color:#fff}
+.uhead .pts small,.ustats small,.tot small{color:#6f7a8c!important;letter-spacing:.14em!important;font-family:var(--cond)!important}
+.ustats{background:rgba(0,0,0,.25)!important;border-color:rgba(255,255,255,.06)!important}
+.ustats div+div{border-left-color:rgba(255,255,255,.06)!important}
+.ustats b{color:#e9f8ff}
+.tot b{color:#fff;text-shadow:0 0 18px rgba(62,230,255,.4)}
+.tw th,th{background:rgba(255,255,255,.035)!important;color:#7f8a9c!important;font:600 10.5px var(--cond)!important;letter-spacing:.12em;text-transform:uppercase}
+.tw td{border-color:rgba(255,255,255,.06)!important}
+td.ac{background:rgba(62,230,255,.07)!important}
+.atk tr.who td{background:rgba(62,230,255,.05)!important;color:#9fb0c4!important}
+a.dsl{text-decoration-color:var(--neon)!important;color:#dff8ff}
+.dsd>summary{font:600 15px var(--cond)!important}
+.dsd.flash>summary{background:rgba(62,230,255,.14)!important}
+.btn{border-radius:12px!important;border:1px solid rgba(255,255,255,.12)!important;background:rgba(255,255,255,.05)!important;color:#e9eef6!important;font:600 14px var(--cond)!important;letter-spacing:.04em}
+.btn.pri,.htitle .btn.pri,.hhead2 .btn.pri{background:linear-gradient(135deg,#3ee6ff,#8b7bff)!important;border:0!important;color:#041018!important;box-shadow:0 8px 28px -10px rgba(62,230,255,.7)}
+.chip,.filter button,.phbar button{background:rgba(255,255,255,.04)!important;border:1px solid rgba(255,255,255,.1)!important;color:#c3cbd8!important;border-radius:999px!important}
+.filter button[aria-pressed="true"],.phbar button[aria-pressed="true"],.phbar button.on,.chip.on{background:rgba(62,230,255,.14)!important;border-color:rgba(62,230,255,.55)!important;color:#dffaff!important;box-shadow:0 0 16px -6px rgba(62,230,255,.8)}
+.rounds button{background:rgba(255,255,255,.04)!important;border:1px solid rgba(255,255,255,.1)!important;color:#c3cbd8!important;border-radius:12px!important}
+.rounds button[aria-pressed="true"]{background:rgba(62,230,255,.16)!important;border-color:var(--neon)!important;color:#fff!important;box-shadow:var(--glow)}
+.qi.strat{border-left:2px solid var(--neon)!important}
+input[type=text],textarea,select{background:rgba(0,0,0,.35)!important;border:1px solid rgba(255,255,255,.12)!important;color:#e9eef6!important;border-radius:12px!important}
+textarea:focus,input:focus,select:focus{outline:none;border-color:var(--neon)!important;box-shadow:var(--glow)}
+.hhead2 h2{font:700 28px/1.05 var(--cond)!important;letter-spacing:-.01em;background:linear-gradient(90deg,#fff,#a9eeff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.acard .lfav.on svg{fill:var(--neon);stroke:var(--neon)}.acard .lfav.on{color:var(--neon)}
+.aopen i{color:var(--neon)!important;opacity:.85}
+.bar{background:rgba(255,255,255,.06)!important}
+.note{color:#7f8a9c}
+::selection{background:rgba(62,230,255,.3)}
 </style>
-<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#120b0c"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Muster"><link rel="apple-touch-icon" href="icon-192.png"><script src="config.js"></script></head>
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#05070b"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Muster"><link rel="apple-touch-icon" href="icon-192.png"><script src="config.js"></script></head>
 <body>
 <header class="top">
   <div class="brand">
