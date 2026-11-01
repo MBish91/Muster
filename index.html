@@ -483,6 +483,50 @@ button.cg-h{width:100%;background:none;border:0;text-align:left;-webkit-appearan
 .lcard b{display:block;font:700 17px var(--cond)}.lcard small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
 .lact{display:flex;gap:6px;flex:none}.badge{display:inline-flex;align-items:center;height:32px;padding:0 10px;border-radius:var(--r-pill);background:var(--surface-2);font:600 12px var(--cond);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .gearl{margin:6px 0 0;font-size:12.5px;color:var(--muted)}
+
+/* ===== clean, art-free UI ===== */
+.top h1,.brand h1{font:700 18px/1.15 var(--sans)!important;letter-spacing:-.01em}
+.sect,.sect span,h2.sect{font-family:var(--sans)!important;letter-spacing:.06em}
+html{-webkit-text-size-adjust:100%}
+body{-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none}
+button,summary,a,[role=tab]{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#crest:empty,#crest .crest{display:none}
+.hero,.homehero,.arena,.kvw,.cutout,.lead,.noart-note{display:none!important}
+.unit{border:1px solid var(--line);border-radius:14px;background:var(--surface);margin:0 0 8px;contain:layout paint}
+.unit[open]{box-shadow:0 6px 24px -12px rgba(0,0,0,.35)}
+.unit>summary.uhead{display:grid;grid-template-columns:1fr auto 20px;align-items:center;gap:12px;padding:14px 14px 14px 16px;min-height:60px;background:none;border:0}
+.uhead .nm{min-width:0}
+.uhead .nm b{display:block;font:700 17px/1.2 var(--sans);letter-spacing:-.01em;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.uhead .nm small{display:block;margin-top:2px;font:500 12.5px var(--sans);color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.uhead .pts{font:700 16px var(--sans);color:var(--ink);text-align:right;font-variant-numeric:tabular-nums;opacity:1!important}
+.uhead .pts small{display:block;font:600 10px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.uhead .chev{color:var(--muted);transition:transform .3s cubic-bezier(.16,1,.3,1)}
+.unit[open]>.uhead .chev{transform:rotate(90deg)}
+.unit>summary.uhead:active{background:var(--surface-2,rgba(0,0,0,.04))}
+.ustats{display:grid;grid-template-columns:repeat(6,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--surface-2,rgba(0,0,0,.03))}
+.ustats div{padding:10px 2px;text-align:center;min-width:0}
+.ustats div+div{border-left:1px solid var(--line)}
+.ustats b{display:block;font:700 16px var(--sans);font-variant-numeric:tabular-nums;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ustats small{display:block;margin-top:1px;font:600 9.5px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.umeta:empty{display:none}
+.hhead2{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 14px}
+.hhead2 h2{margin:0;font:800 26px/1.1 var(--sans);letter-spacing:-.02em}
+.hhead2 p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.acard{display:flex;align-items:stretch;gap:4px;margin:0 0 8px;border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden}
+.aopen{flex:1;min-width:0;text-align:left;border:0;background:none;color:var(--ink);padding:14px 4px 14px 16px;cursor:pointer;font:inherit}
+.aopen:active{background:var(--surface-2,rgba(0,0,0,.04))}
+.aopen b{display:block;font:700 17px/1.2 var(--sans);letter-spacing:-.01em}
+.aopen small{display:block;margin-top:3px;color:var(--muted);font-size:12.5px;line-height:1.35}
+.aopen i{display:inline-block;margin-top:6px;font:600 11px var(--sans);font-style:normal;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.acard .lfav,.acard .ldel{position:static;align-self:center;flex:none;width:40px;height:40px;border-radius:12px;border:0;background:none;color:var(--muted);display:grid;place-items:center}
+.acard .ldel{margin-right:6px;font-size:14px}
+.acard .lfav svg{stroke:currentColor}.acard .lfav.on{color:#e0ac45;background:none}.acard .lfav.on svg{fill:#e0ac45;stroke:#e0ac45}
+.acard .ldel.armed{width:auto;padding:0 12px;background:#b3261e;color:#fff}
+main section.enter{animation:secIn .28s cubic-bezier(.16,1,.3,1)}
+@keyframes secIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.btn,.uhead,.aopen,.dsd>summary{transition:background-color .15s,transform .15s}
+.btn:active{transform:scale(.97)}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 <link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#120b0c"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Muster"><link rel="apple-touch-icon" href="icon-192.png"><script src="config.js"></script></head>
 <body>
@@ -1047,7 +1091,7 @@ function toggleUnit(d){
 }
 function bump(sel){if(RM.matches)return;document.querySelectorAll(sel).forEach(el=>{el.classList.remove("bump");void el.offsetWidth;el.classList.add("bump");});}
 addEventListener("resize",moveInd);
-document.addEventListener("click",e=>{const sm=e.target.closest("details.unit>summary");if(!sm)return;e.preventDefault();toggleUnit(sm.parentElement);});
+document.addEventListener("click",e=>{const sm=e.target.closest("details.unit>summary,details.dsd>summary");if(!sm)return;e.preventDefault();toggleUnit(sm.parentElement);});
 
 
 /* ---------- LIBRARY ---------- */
@@ -1107,7 +1151,7 @@ function loadList(id){
   REPORT={missing:A.missing,issues:P.issues,detMissing:P.dets.filter(d=>!DETR[nrm(d)]),enhMissing,count:P.units.length};
   KEY="wh-army-state-"+L.id;S=blank();try{const r=localStorage.getItem(KEY);if(r)S=Object.assign(blank(),JSON.parse(r));}catch(e){}
   const fac=FACTIONS[META.fac];document.documentElement.dataset.faction=fac?fac.theme:"other";
-  document.getElementById("crest").innerHTML=CREST[fac?fac.theme:"other"];
+  document.getElementById("crest").innerHTML="";
   document.getElementById("lname").textContent=META.name;
   document.getElementById("lmeta").textContent=[META.factions[META.factions.length-1]||"",META.pts?META.pts.toLocaleString("en-GB")+" pts":"",META.mission].filter(Boolean).join(" · ");
   document.title=META.name+" · Muster";
@@ -1116,25 +1160,16 @@ function loadList(id){
 /* ---------- ART ---------- */
 function unitArt(u){
   const star=u.parts.find(p=>p.warlord)||u.parts.find(p=>/Leader/.test(p.role))||u.parts[0];
-  const withArt=[star,...u.parts].find(p=>artFor(p.lib));
-  GENCTX.fac=facColors(META);const ga=star&&star.lib&&LIB[star.lib]?genArtFor(star.lib):null;GENCTX.fac=null;return {star,art:ga||(withArt?artFor(withArt.lib):null)};
+  return {star,art:null};
 }
 function heroArt(u){
   const q=p=>p.qty||DS[p.key].qty||1;
-  const {star,art}=unitArt(u),rest=u.parts.filter(p=>p!==star);
   const models=u.parts.reduce((x,p)=>x+q(p),0),wnds=u.parts.reduce((x,p)=>x+q(p)*(+DS[p.key].stats.W||0),0);
-  const body=DS[u.parts[u.parts.length-1].key].stats,pts=u.parts.reduce((x,p)=>x+p.pts,0);
-  const kw=DS[star.key].keywords||"";
-  const tag=u.tag||(/Leader/.test(star.role)?"Leader":/Support/.test(star.role)?"Support":/Epic Hero/i.test(kw)?"Epic Hero":/Titanic/i.test(kw)?"Titanic":/Battlesuit/i.test(kw)?"Battlesuit":/Vehicle/i.test(kw)?"Vehicle":/Battleline/i.test(u.grp+kw)?"Battleline":"Unit");
-  const e=star.enh?enhFind(star.enh):null;
-  const detail=e?e.name:(DS[star.key].gearList||[]).slice(0,2).join(" · ");
-  const crew=rest.map(p=>`<span>${q(p)>1?q(p)+" × ":""}${esc(DS[p.key].name.replace(/\s*\(.*\)$/,""))}</span>`).join("");
-  const t=unitAttacks(u),shooty=META.fac==="tau";
-  const st=[[models,"Models"],[wnds,"Wounds"],["T"+body.T,"Tough"],[body.Sv+(body.InSv?"/"+body.InSv:""),"Save"],[shooty?fmtT(t.R):fmtT(t.M),shooty?"Shots":"Melee"],[pts,"Pts",1]]
-    .map(([v,l,h])=>`<div class="${h?"hl":""}"><b>${esc(String(v))}</b><small>${l}</small></div>`).join("");
-  return `<div class="hero art ${art&&art.w?"wide":""} ${art?"":"noart"}"><div class="kvw" ${art?`style="--art:url('${art.s}')${art.ai?';--ap:center 20%':''}"`:""}></div>${art&&art.c?`<img class="cutout" src="${art.c}" alt="${esc(u.title)}">`:""}
-  <div class="stage"><div class="who"><div class="pos"><b>${esc(tag)}</b>${detail?`<i>${esc(detail)}</i>`:""}</div>${crew?`<div class="crew">${crew}</div>`:""}${art?"":`<p class="noart-note">No artwork for this unit yet</p>`}</div></div>
-  <div class="stats">${st}</div></div>`;
+  const body=DS[u.parts[u.parts.length-1].key].stats;
+  const t=unitAttacks(u);
+  const st=[[models,"Models"],[wnds,"Wounds"],["T"+body.T,"Tough"],[body.Sv+(body.InSv?"/"+body.InSv:""),"Save"],[fmtT(t.R),"Ranged"],[fmtT(t.M),"Melee"]]
+    .map(([v,l])=>`<div><b>${esc(String(v))}</b><small>${l}</small></div>`).join("");
+  return `<div class="ustats">${st}</div>`;
 }
 
 /* ---------- collapsible groups ---------- */
@@ -1158,8 +1193,7 @@ function renderArmy(){
     const pts=u.parts.reduce((a,p)=>a+p.pts,0),enhs=u.parts.map(p=>p.enh).filter(Boolean);
     const sub=u.parts.length>1?[...new Set(u.parts.map(p=>(p.role||"Unit").split(" ·")[0]))].join(" + "):(u.parts[0].role||"");
     const atk=(()=>{const t=unitAttacks(u);return `${fmtT(t.R)} <em>ranged</em> · ${fmtT(t.M)} <em>melee attacks</em>`})();
-    const {art}=unitArt(u);
-    h+=`<details class="unit" data-u="${u.id}"><summary class="strip ${art?"":"noart"}" ${art?`style="--art:url('${art.s}')${art.ai?';--ap:center 20%':''}"`:""}><div class="nm"><b${u.title.length>20?' class="two"':""}><span>${esc(u.title)}</span></b></div><div class="pts">${pts}<small>PTS</small></div>${CHEV}</summary>${heroArt(u)}<div class="umeta"><span class="usub">${esc(u.tag&&!sub.includes(u.tag)?u.tag+" · "+sub:sub)}</span><span class="sumline">${atk}</span>${enhs.length?`<div class="seals">${enhs.map(x=>`<span class="sealtag">${esc(x)}</span>`).join("")}</div>`:""}</div>${atkBlock(u)}${u.parts.map((p,i)=>`<details class="dsd" id="ds-${u.id}-${i}"><summary><span>${esc(DS[p.key].name)}</span><small>${p.pts?p.pts+" pts · ":""}${esc((p.role||"").split(" ·")[0])}</small></summary>${part(u,p,i)}</details>`).join("")}</details>`;
+        h+=`<details class="unit" data-u="${u.id}"><summary class="uhead"><div class="nm"><b>${esc(u.title)}</b><small>${esc(u.tag&&!sub.includes(u.tag)?u.tag+" · "+sub:sub)}</small></div><div class="pts">${pts}<small>pts</small></div>${CHEV}</summary>${heroArt(u)}<div class="umeta">${enhs.length?`<div class="seals">${enhs.map(x=>`<span class="sealtag">${esc(x)}</span>`).join("")}</div>`:""}</div>${atkBlock(u)}${u.parts.map((p,i)=>`<details class="dsd" id="ds-${u.id}-${i}"><summary><span>${esc(DS[p.key].name)}</span><small>${p.pts?p.pts+" pts · ":""}${esc((p.role||"").split(" ·")[0])}</small></summary>${part(u,p,i)}</details>`).join("")}</details>`;
     sec.h+=h;
   });
   secs.forEach(s=>{h+=cgroup(`a:${LISTS.active}:${s.g}`,"sect",`<span>${esc(s.g)}</span>`,s.h,`${s.n} unit${s.n>1?"s":""} · ${s.pts.toLocaleString("en-GB")} pts`);});
@@ -1173,7 +1207,7 @@ const LOGO=`<svg class="crest" viewBox="0 0 40 40" aria-hidden="true"><defs><lin
 const WORDMARK=`<svg class="wordmark" viewBox="0 0 300 70" role="img" aria-label="Muster"><defs><linearGradient id="wm-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3c9"/><stop offset=".5" stop-color="#e8b850"/><stop offset="1" stop-color="#8f6117"/></linearGradient></defs><text x="150" y="56" text-anchor="middle" font-family="Barlow Condensed,Arial Narrow,sans-serif" font-style="italic" font-weight="800" font-size="70" letter-spacing="3" fill="url(#wm-g)" stroke="#120d08" stroke-width="2.5" paint-order="stroke">MUSTER</text></svg>`;
 
 const armyLabel=P=>P.factions.length?P.factions[P.factions.length-1].replace(/’/g,"'"):"Other";
-function listCover(P){GENCTX.fac=facColors(P);try{return listCover0(P);}finally{GENCTX.fac=null;}}
+function listCover(P){return null;}
 function listCover0(P){
   const pick=u=>{const ks=NAMEMAP[nrm(u.name)];if(ks)for(const k of ks)if(LIB[k])return genArtFor(k);if(ks)for(const k of ks)if(artFor(k))return artFor(k);const mm=MODELMAP[nrm(u.name)];if(mm)for(const m of u.models){const k=mm[nrm(m.name)];if(k&&artFor(k))return artFor(k);}if(ks)for(const k of ks)if(LIB[k])return genArtFor(k);return null;};
   const w=P.units.find(u=>u.warlord);return (w&&pick(w))||P.units.map(pick).find(Boolean)||null;}
@@ -1189,19 +1223,16 @@ function renderHome(){
   const groups={};
   LISTS.lists.forEach((L,i)=>{const P=parseList(L.raw);(groups[armyLabel(P)]=groups[armyLabel(P)]||[]).push({L,P,i});});
   Object.values(groups).forEach(g=>g.sort((a,b)=>(b.L.fav||0)-(a.L.fav||0)||a.i-b.i));
-  let h=`<div class="homehero"><div class="hbg"></div><div class="arena"><div class="fl a"></div><div class="vs">VS</div><div class="fr a"></div></div>
-    <div class="htitle">${WORDMARK}<p>Paste your list. Muster your army.</p><button class="btn pri" id="goPaste">+ Paste a new list</button></div></div>
-  <div class="hhead"><h2>Your armies</h2></div>`;
-  FACE.pool=leaderPool(groups);
+  let h=`<div class="hhead2"><div><h2>Your armies</h2><p>${LISTS.lists.length} saved list${LISTS.lists.length===1?"":"s"}</p></div><button class="btn pri" id="goPaste">+ Paste list</button></div>`;
   if(!LISTS.lists.length)h+=`<div class="empty">No lists yet. Tap “Paste a new list” to add one from the Warhammer app.</div>`;
   Object.keys(groups).sort().forEach(g=>{
     const fac=facOf(groups[g][0].P),theme=FACTIONS[fac]?FACTIONS[fac].theme:"other";
     let b="";
-    groups[g].forEach(({L,P})=>{const art=listCover(P);
-      b+=`<div class="lcard2" data-t="${theme}">
-        <button class="lopen" data-open="${L.id}" ${art?`style="--art:url('${art.s}')${art.ai?';--ap:center 20%':''}"`:""}><b><span>${esc(P.name)}</span></b><small>${esc([P.pts?P.pts.toLocaleString("en-GB")+" pts":"",P.dets.join(", "),P.mission].filter(Boolean).join(" · "))}</small><i>${(n=>n+" unit"+(n===1?"":"s"))(new Set(P.units.map((u,i)=>u.att?"a"+u.att:"s"+i)).size)}</i></button>
+    groups[g].forEach(({L,P})=>{
+      b+=`<div class="acard">
+        <button class="aopen" data-open="${L.id}"><b>${esc(P.name)}</b><small>${esc([P.pts?P.pts.toLocaleString("en-GB")+" pts":"",P.dets.join(", "),P.mission].filter(Boolean).join(" · "))}</small><i>${(n=>n+" unit"+(n===1?"":"s"))(new Set(P.units.map((u,i)=>u.att?"a"+u.att:"s"+i)).size)}</i></button>
         <button class="lfav ${L.fav?"on":""}" data-fav="${L.id}" aria-label="${L.fav?"Unpin":"Pin"} ${esc(P.name)}" aria-pressed="${!!L.fav}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg></button><button class="ldel" data-dellist="${L.id}" aria-label="Delete ${esc(P.name)}">✕</button></div>`;});
-    h+=cgroup("h:"+g,"sect army-h",`<span class="mini">${CREST[theme]}</span><span>${esc(g)}</span> <small>${groups[g].length} list${groups[g].length>1?"s":""}</small>`,b,"");
+    h+=cgroup("h:"+g,"sect army-h",`<span>${esc(g)}</span> <small>${groups[g].length} list${groups[g].length>1?"s":""}</small>`,b,"");
   });
   home.innerHTML=h;
 }
@@ -1232,7 +1263,7 @@ function renderPaste(){setTimeout(()=>{const x=document.getElementById("pasteBox
   <div class="panel"><p class="note" style="margin:0 0 8px">In the Warhammer 40,000 app, open your army, tap Share → Copy as text, then paste it here. It's filed under its army automatically.</p>
   <textarea id="pasteBox" placeholder="My Army (2,000 Points)&#10;&#10;Faction&#10;Sub-faction&#10;Detachment (1 Detachment Point)&#10;Mission&#10;Strike Force (2,000 Points)&#10;&#10;CHARACTERS&#10;&#10;Warlord unit (100 Points)&#10;  • Warlord&#10;  • 1x Weapon&#10;…"></textarea>
   <div class="row"><button class="btn pri" id="buildList">Build army</button><button class="btn" data-home="1">Cancel</button></div><p class="note" id="pasteMsg" style="margin:8px 0 0"></p></div>
-  <p class="note">Every 11th edition army is built in. Rules wording and artwork for new units are added in the background.</p>`;
+  <p class="note">Every 11th edition army is built in. Rules wording for new units is added in the background.</p>`;
 }
 function setView(v){
   LISTS.view=v;saveLists();
@@ -1240,8 +1271,8 @@ function setView(v){
   const secs=["army","phases","strats","battle","rules"];
   document.querySelectorAll("main section").forEach(s=>s.hidden=true);
   clearTimeout(FACE.t);
-  if(v==="home"){renderHome();home.hidden=false;setTimeout(faceoff,60);
-    document.documentElement.dataset.faction="home";document.getElementById("crest").innerHTML=LOGO;
+  if(v==="home"){renderHome();home.hidden=false;
+    document.documentElement.dataset.faction="home";document.getElementById("crest").innerHTML="";
     document.getElementById("lname").textContent="Muster";document.getElementById("lmeta").textContent=`${LISTS.lists.length} saved list${LISTS.lists.length===1?"":"s"}`;document.title="Muster";}
   else if(v==="paste"){renderPaste();paste.hidden=false;document.getElementById("lname").textContent="New list";}
   else{const t=document.querySelector('.tabs button[aria-selected="true"]')||document.querySelector('.tabs button');
@@ -1629,7 +1660,7 @@ function pxCut(P,kind,L){
 }
 
 /* ---------- painted art from the user's free Cloudflare worker; pixel art shows until each picture arrives ---------- */
-const AIART={cutSet:new Set(),url:(window.MUSTER_SB&&window.MUSTER_SB.art)||"",ready:{},busy:{},q:[],run:0,t:null};
+const AIART={cutSet:new Set(),url:"",ready:{},busy:{},q:[],run:0,t:null};
 function aiHue(h){h=gHex(h,"444444");const n=parseInt(h,16),r=n>>16&255,g=n>>8&255,b=n&255,mx=Math.max(r,g,b),mn=Math.min(r,g,b);
   if(mx<60)return "black";if(mx-mn<28)return mx>190?"white":mx>110?"grey":"dark grey";
   let H;if(mx===r)H=((g-b)/(mx-mn)+6)%6;else if(mx===g)H=(b-r)/(mx-mn)+2;else H=(r-g)/(mx-mn)+4;H*=60;
@@ -2333,6 +2364,14 @@ document.documentElement.dataset.theme="light";try{const th=localStorage.getItem
 if(LISTS.view==="list"&&LISTS.lists.find(x=>x.id===LISTS.active)){loadList(LISTS.active);renderAll();window._cp=S.cp;setView("list");}else{if(LISTS.active&&LISTS.lists.find(x=>x.id===LISTS.active)){loadList(LISTS.active);renderAll();}setView("home");}requestAnimationFrame(moveInd);document.fonts&&document.fonts.ready.then(moveInd);
 whBoot();
 if(window.claude&&claude.use)initCaps();
+
+/* swipe left/right on the game screens to change tab */
+(()=>{let x0=0,y0=0,ok=false;const m=document.querySelector("main");if(!m)return;
+  m.addEventListener("touchstart",e=>{const t=e.touches[0];x0=t.clientX;y0=t.clientY;ok=LISTS.view==="list"&&e.touches.length===1&&!e.target.closest(".tw,.pchips,.chips,.rounds,textarea,input,select,table");},{passive:true});
+  m.addEventListener("touchend",e=>{if(!ok)return;ok=false;const t=e.changedTouches[0],dx=t.clientX-x0,dy=t.clientY-y0;
+    if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*2)return;
+    const tabs=[...document.querySelectorAll(".tabs button")],i=tabs.findIndex(b=>b.getAttribute("aria-selected")==="true"),n=tabs[i+(dx<0?1:-1)];
+    if(n)switchTab(n);},{passive:true});})();
 
 /* ---------- standalone cloud (Supabase): invite-only login, one private row per person ---------- */
 (function(){
