@@ -724,7 +724,78 @@ const ARTK={captainTerm:"bt/captain",captainTermCF:"bt/captain",marshal:"bt/mars
 Object.assign(ARTK,{"ai_daemon-prince-of-khorne":"we/prince","ai_eightbound":"we/eightbound","ai_exalted-eightbound":"we/exalted","ai_forgefiend":"we/forgefiend","ai_jakhals":"we/jakhals","ai_slaughterbound":"we/slaughter","ai_lord-invocatus":"we/invocatus","ai_khorne-berzerkers":"we/berzerkers","ai_defiler":"we/defiler","ai_helbrute":"we/helbrute","ai_maulerfiend":"we/maulerfiend"});
 const WIDEART={"we/forgefiend":1,"we/maulerfiend":1,"we/defiler":1,"bt/impulsor":1,"bt/redeemer":1,"tau/lance":1};
 
+
+/* ---------- accept other list formats: convert to the Warhammer app text export ---------- */
+function toCanon(raw){
+  raw=String(raw||"").replace(/\r/g,"").replace(/[​﻿]/g,"");
+  const L=raw.split("\n");
+  const SZ=/(strike force|incursion|onslaught|combat patrol)/i;
+  const isCanon=(()=>{for(let i=0;i<L.length;i++){const s=L[i];if(s.trim()&&!/^\s/.test(s)&&/\(([\d,]+)\s*Points?\)\s*$/i.test(s.trim())&&!/Detachment Point|Strike Force|Incursion|Onslaught|Combat Patrol/i.test(s)&&L.slice(i+1,i+9).some(x=>/Detachment Point|Strike Force|Incursion|Onslaught|Combat Patrol/i.test(x)))return true;}return false;})();
+  if(isCanon)return raw;
+  const PTS=/[(\[]\s*(\d[\d,]*)\s*(?:pts?\b\.?|points?\b|p\b)\s*[)\]]/i;
+  const meta={fac:[],det:[],size:"",mission:"",pts:0,name:"",warlord:"",enh:[]};
+  const units=[];let sect="OTHER DATASHEETS",cur=null,seenUnit=false;
+  const SECT=/^(?:#+\s*)?(characters?|epic heroes|battleline|other datasheets?|dedicated transports?|allied units?|fortifications?|other)\s*:?\s*$/i;
+  const fixSect=s=>{s=s.toUpperCase().replace(/\s+/g," ");if(/^CHARACTER|^EPIC/.test(s))return"CHARACTERS";if(s==="OTHER")return"OTHER DATASHEETS";if(/^DEDICATED/.test(s))return"DEDICATED TRANSPORTS";if(/^OTHER DATASHEET/.test(s))return"OTHER DATASHEETS";if(/^ALLIED/.test(s))return"ALLIED UNITS";return s;};
+  const cleanN=s=>s.replace(/^[\s*•◦\-–—+#]+/,"").replace(/\*\*/g,"").trim();
+  const num=s=>+String(s).replace(/,/g,"");
+  const splitGear=s=>s.split(/\s*,\s*(?![^()]*\))/).map(x=>x.trim()).filter(Boolean);
+  const KEYS=/^\s*[+*-]*\s*(faction|faction keyword|detachment|total army points|army points|battle size|force disposition|mission)\s*:/i;
+  const firstI=L.findIndex(x=>x.trim());
+  const titleI=(firstI>=0&&PTS.test(L[firstI])&&L.slice(firstI+1,firstI+8).some(x=>KEYS.test(x)))?firstI:-1;
+  if(titleI>=0){const tm=L[titleI].trim().match(/^(.*?)\s*[(\[]\s*(\d[\d,]*)/);if(tm){meta.name=tm[1].replace(/^[#\s*]+/,"").trim();meta.pts=num(tm[2]);}}
+  for(let li=0;li<L.length;li++){const line=L[li];
+    if(li===titleI)continue;
+    const t=cleanN(line);if(!t)continue;
+    let m;
+    if(/^\++\s*[A-Z ]+:/.test(line.trim())||(!seenUnit&&/^(faction|faction keyword|detachment|total army points|army points|points|battle size|force disposition|mission|warlord|number of units|army name|list name|name)\s*:/i.test(t))){
+      const mm=t.match(/^([A-Za-z ]+?)\s*:\s*(.*)$/);if(!mm)continue;const k=mm[1].toLowerCase().trim(),v=mm[2].trim();
+      if(/^faction/.test(k))meta.fac.push(v);
+      else if(/^detachment/.test(k))meta.det.push(...v.split(/\s*,\s*/).filter(Boolean));
+      else if(/points/.test(k)||k==="points"){const n=v.match(/([\d,]+)/);if(n)meta.pts=num(n[1]);}
+      else if(/battle size/.test(k)){const s=v.match(SZ),n=v.match(/([\d,]{3,})/);meta.size=(s?s[1]:"")+(n?" ("+num(n[1]).toLocaleString("en-GB")+" Points)":"");}
+      else if(/disposition|mission/.test(k))meta.mission=v;
+      else if(/warlord/.test(k)){meta.warlord=v.replace(/^([A-Za-z]+\d+).*/,"$1");meta.warlordName=v;}
+      else if(/enhancement/.test(k)){const e=v.match(/^(.*?)\s*\(\s*on\s+([A-Za-z]+\d+)?[^)]*\)\s*$/i);if(e)meta.enh.push({name:e[1].trim(),id:e[2]||"",on:v});else meta.enh.push({name:v.replace(/\s*\(\+?\d+\s*pts?\)\s*$/i,""),id:"",on:""});}
+      else if(/name/.test(k))meta.name=v;
+      continue;
+    }
+    if(SECT.test(t)){sect=fixSect(t.replace(/^#+\s*/,"").replace(/:$/,""));cur=null;continue;}
+    if(/^[A-Z][A-Z '’&-]{3,}$/.test(line.trim())&&!PTS.test(line)){sect=fixSect(line.trim());cur=null;continue;}
+    const um=(!/^\s*[•◦*-]/.test(line)||/^\s{0,1}[•*-]\s+\S.*[(\[]\s*\d/.test(line))&&t.match(/^(?:([A-Za-z]+\d+)\s*:\s*)?(?:(\d+)\s*x\s+)?(.+?)\s*[(\[]\s*(\d[\d,]*)\s*(?:pts?\b\.?|points?\b|p\b)\s*[)\]]\s*(?::\s*(.*))?$/i);
+    if(um&&!/^(enhancement|total|warlord)/i.test(um[3])){
+      seenUnit=true;
+      cur={id:um[1]||"",n:um[2]?+um[2]:1,name:um[3].replace(/^[A-Za-z]+\d+\s*:\s*/,"").trim(),pts:num(um[4]),sect,gear:[],lines:[],warlord:false,enh:""};
+      if(um[5]){splitGear(um[5]).forEach(g=>{const c=g.match(/^(\d+)\s*x\s+(.+)$/i);if(/^warlord$/i.test(g))cur.warlord=true;else cur.gear.push(c?{n:+c[1],name:c[2].trim()}:{n:0,name:g});});}
+      units.push(cur);continue;
+    }
+    if(!cur){if(!meta.name&&PTS.test(t)){const nm=t.match(/^(.*?)\s*[(\[]/);if(nm)meta.name=nm[1].trim();const n=t.match(PTS);if(n&&!meta.pts)meta.pts=num(n[1]);}else if(!meta.name&&!seenUnit&&t.length<60&&!/:/.test(t))meta.name=t;continue;}
+    let e;
+    if((e=t.match(/^enhancements?\s*:\s*(.*?)\s*(?:\(\s*\+?\s*\d+\s*pts?\s*\))?\s*$/i))){cur.enh=e[1].replace(/\s*\(\+?\d+\s*pts?\)\s*$/i,"").trim();continue;}
+    if(/^warlord\b/i.test(t)){cur.warlord=true;continue;}
+    if((e=t.match(/^(\d+)\s+with\s+(.+)$/i))){splitGear(e[2]).forEach(g=>{const c=g.match(/^(\d+)\s*x\s+(.+)$/i);cur.gear.push({n:c?+c[1]:+e[1],name:(c?c[2]:g).trim()});});continue;}
+    if((e=t.match(/^(\d+)\s*x\s+(.+?)\s*:\s*(.+)$/i))){splitGear(e[3]).forEach(g=>{const c=g.match(/^(\d+)\s*x\s+(.+)$/i);cur.gear.push({n:c?+c[1]:+e[1],name:(c?c[2]:g).trim()});});continue;}
+    if((e=t.match(/^(\d+)\s*x\s+(.+)$/i))){cur.gear.push({n:+e[1],name:e[2].trim()});continue;}
+    if(/,/.test(t)||t.length<60)splitGear(t).forEach(g=>{if(/^warlord$/i.test(g))cur.warlord=true;else cur.gear.push({n:0,name:g});});
+  }
+  if(!units.length)return raw;
+  meta.enh.forEach(e=>{const u=units.find(x=>x.id&&x.id.toLowerCase()===String(e.id).toLowerCase())||units.find(x=>e.on&&e.on.toLowerCase().includes(x.name.toLowerCase()));if(u&&!u.enh)u.enh=e.name;});
+  if(meta.warlord){const u=units.find(x=>x.id&&x.id.toLowerCase()===meta.warlord.toLowerCase())||units.find(x=>meta.warlordName&&meta.warlordName.toLowerCase().includes(x.name.toLowerCase()));if(u)u.warlord=true;}
+  const sum=units.reduce((a,u)=>a+u.pts,0),total=meta.pts||sum;
+  const fac=meta.fac.length?meta.fac:["Unknown faction"];
+  const out=[`${meta.name||fac[fac.length-1]+" list"} (${total.toLocaleString("en-GB")} Points)`,"",...fac,`${meta.det.join(", ")||"Detachment"} (0 Detachment Points)`];
+  if(meta.mission)out.push(meta.mission);
+  out.push(meta.size||`${total<=500?"Combat Patrol":total<=1000?"Incursion":total<=2000?"Strike Force":"Onslaught"} (${(Math.ceil(total/500)*500).toLocaleString("en-GB")} Points)`,"");
+  const order=[];units.forEach(u=>{if(!order.includes(u.sect))order.push(u.sect);});
+  order.forEach(s=>{out.push(s,"");units.filter(u=>u.sect===s).forEach(u=>{
+    out.push(`${u.name} (${u.pts} Points)`);if(u.warlord)out.push("  • Warlord");if(u.enh)out.push(`  • Enhancements: ${u.enh}`);
+    const q=u.n||1;out.push(`  • ${q}x ${u.name}`);
+    const seen=new Set();u.gear.forEach(g=>{const k=g.name.toLowerCase();if(seen.has(k))return;seen.add(k);out.push(`     ◦ ${g.n||q}x ${g.name}`);});
+    out.push("");});});
+  return out.join("\n");
+}
 function parseList(raw){
+  raw=toCanon(raw);
   const L=String(raw||"").replace(/\r/g,"").split("\n");
   const out={name:"Untitled list",pts:0,factions:[],dets:[],mission:"",size:"",units:[],issues:[]};
   const NAMEL=/^(.*?)\s*\(([\d,]+)\s*Points?\)\s*$/i;
@@ -766,6 +837,7 @@ function parseList(raw){
     const add=(g,n)=>{const k=nrm(g);u.gear[k]=(u.gear[k]||0)+n;if(!u.gearList.includes(g))u.gearList.push(g);};
     models.forEach(x=>x.sub.forEach(g=>add(g.name,g.n)));top.forEach(g=>add(g.name,g.n));
   });
+  out.units.forEach(u=>{const m=u.name.match(/^(.*?)\s+with\s+(.+)$/i);if(m&&!NAMEMAP[nrm(u.name)]&&NAMEMAP[nrm(m[1])]){u.misc.push("with "+m[2]);u.name=m[1].trim();}});
   const sum=out.units.reduce((a,u)=>a+u.pts,0);
   if(out.pts&&sum!==out.pts)out.issues.push(`Unit points add up to ${sum}, but the list says ${out.pts}.`);
   return out;
@@ -1449,7 +1521,7 @@ function faceoff(){
 }
 function renderPaste(){setTimeout(()=>{const x=document.getElementById("pasteBox");if(x&&!x.value&&LISTS.draft)x.value=LISTS.draft;},0);
   paste.innerHTML=`<h2 class="sect">Paste a new list</h2>
-  <div class="panel"><p class="note" style="margin:0 0 8px">In the Warhammer 40,000 app, open your army, tap Share → Copy as text, then paste it here. It's filed under its army automatically.</p>
+  <div class="panel"><p class="note" style="margin:0 0 8px">Paste any army list: the Warhammer 40,000 app (Share → Copy as text), New Recruit, Battlescribe or a plain typed list all work. It's filed under its army automatically.</p>
   <textarea id="pasteBox" placeholder="My Army (2,000 Points)&#10;&#10;Faction&#10;Sub-faction&#10;Detachment (1 Detachment Point)&#10;Mission&#10;Strike Force (2,000 Points)&#10;&#10;CHARACTERS&#10;&#10;Warlord unit (100 Points)&#10;  • Warlord&#10;  • 1x Weapon&#10;…"></textarea>
   <div class="row"><button class="btn pri" id="buildList">Build army</button><button class="btn" data-home="1">Cancel</button></div><p class="note" id="pasteMsg" style="margin:8px 0 0"></p></div>
   <p class="note">Every 11th edition army is built in. Rules wording for new units is added in the background.</p>`;
