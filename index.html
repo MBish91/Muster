@@ -357,6 +357,12 @@ details[open]>summary .chev{transform:rotate(90deg)}
 .umeta{padding:10px 14px 4px;border-bottom:1px solid var(--line)}
 .umeta .usub{display:block;font-size:13px;color:var(--muted)}
 
+.dsd{border-top:1px solid var(--line);scroll-margin-top:165px}.dsd>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px var(--s4);cursor:pointer;font:700 16px var(--cond);min-height:48px}
+.dsd>summary::-webkit-details-marker{display:none}.dsd>summary small{font:500 12px var(--sans);color:var(--muted)}.dsd>summary::after{content:"+";font:600 20px var(--sans);color:var(--muted);margin-left:auto}.dsd[open]>summary::after{content:"–"}
+.dsd .ds{border-top:0;padding-top:0}.dsd .dshead{display:none}
+a.dsl{color:inherit;text-decoration:underline;text-decoration-color:var(--seal);text-underline-offset:3px;font-weight:700}
+.dsd.flash>summary{background:rgba(196,98,29,.18);transition:background 1s}
+
 #gbar{display:flex;align-items:center;justify-content:space-between;gap:10px;max-width:760px;margin:0 auto;padding:6px var(--s2) 8px;border-top:1px solid rgba(255,255,255,.08)}
 #gbar:empty,body[data-view="home"] #gbar,body[data-view="paste"] #gbar,header.top:has(.tabs button[data-tab="battle"][aria-selected="true"]) #gbar{display:none}
 #gbar .g{display:flex;align-items:center;gap:6px;color:var(--headInk,#fff);font:600 12px var(--sans);letter-spacing:.06em;text-transform:uppercase}
@@ -935,7 +941,7 @@ function fmtT(T){const parts=[];if(T.n||!Object.keys(T.d).length)parts.push(T.n)
 function fmtA_old(a,c){if(typeof a==="number")return String(a*c);const m=String(a).match(/^(\d*)D(\d)$/);if(!m)return a+"×"+c;const q=(+(m[1]||1))*c;return (q===1?"":q)+"D"+m[2];}
 function unitAttacks(u){
   const R={n:0,d:{}},M={n:0,d:{}},FR={n:0,d:{}},FM={n:0,d:{}};let rowsR="",rowsM="";
-  const who=(d,alive,qty)=>`<tr class="who"><td colspan="7">${esc(d.name)} · ${alive}/${qty} ${qty>1?"models":"model"}</td></tr>`;
+  const who=(d,alive,qty,i)=>`<tr class="who"><td colspan="7"><a href="#" class="dsl" data-ds="${u.id}-${i}">${esc(d.name)}</a> · ${alive}/${qty} ${qty>1?"models":"model"}</td></tr>`;
   const row=(w,c,a,st,notes)=>{
     const tot=c?fmtA(a,c):"–";
     return `<tr class="${w.alt?"alt":""}"><td>${w.alt?"or ":""}${esc(w.n.replace(/^↳ /,""))}${w.kw?`<span class="kw">[${esc(w.kw)}]</span>`:""}${notes}</td><td>${esc(w.r)}</td><td class="ac"><b>${tot}</b><span>${c}×${esc(a)}</span></td><td>${esc(w.s)}</td><td>${esc(st)}</td><td>${esc(w.ap)}</td><td>${esc(w.d)}</td></tr>`;
@@ -944,7 +950,7 @@ function unitAttacks(u){
     const d=DS[p.key],{qty,alive}=aliveOf(u,i,p),e=p.enh&&enhFind(p.enh)&&enhFind(p.enh).weapon;
     const rg=markAlts(d.ranged.map(w=>({...w,n_:w.n_??w.nn}))),ml=markAlts([...d.melee,...(e?[{...e,ench:1}]:[])].map(w=>({...w,n_:w.n_??w.nn})));
     if(rg.length){
-      rowsR+=who(d,alive,qty);
+      rowsR+=who(d,alive,qty,i);
       const onlyPistols=rg.every(isPistol);
       rg.forEach(w=>{const c=cnt(w,qty,alive),cf=cnt(w,qty,qty),rf=(w.kw||"").match(/RAPID FIRE (\d+)/);
         if(!w.alt&&(!isPistol(w)||onlyPistols)){addT(R,w.a,c);addT(FR,w.a,cf);}
@@ -955,7 +961,7 @@ function unitAttacks(u){
         rowsR+=row(w,c,w.a,w.st,notes);});
     }
     if(ml.length){
-      rowsM+=who(d,alive,qty);
+      rowsM+=who(d,alive,qty,i);
       const mb=u.mBonus||0;let best=null;
       ml.forEach(w=>{const a=typeof w.a==="number"?w.a+mb:w.a,st=typeof w.st==="number"?w.st+mb:w.st,c=cnt(w,qty,alive);
         const ea=/EXTRA ATTACKS/.test(w.kw||""),own=w.nn!=null;
@@ -1153,13 +1159,13 @@ function renderArmy(){
     const sub=u.parts.length>1?[...new Set(u.parts.map(p=>(p.role||"Unit").split(" ·")[0]))].join(" + "):(u.parts[0].role||"");
     const atk=(()=>{const t=unitAttacks(u);return `${fmtT(t.R)} <em>ranged</em> · ${fmtT(t.M)} <em>melee attacks</em>`})();
     const {art}=unitArt(u);
-    h+=`<details class="unit" data-u="${u.id}"><summary class="strip ${art?"":"noart"}" ${art?`style="--art:url('${art.s}')${art.ai?';--ap:center 20%':''}"`:""}><div class="nm"><b${u.title.length>20?' class="two"':""}><span>${esc(u.title)}</span></b></div><div class="pts">${pts}<small>PTS</small></div>${CHEV}</summary>${heroArt(u)}<div class="umeta"><span class="usub">${esc(u.tag&&!sub.includes(u.tag)?u.tag+" · "+sub:sub)}</span><span class="sumline">${atk}</span>${enhs.length?`<div class="seals">${enhs.map(x=>`<span class="sealtag">${esc(x)}</span>`).join("")}</div>`:""}</div>${atkBlock(u)}${u.parts.map((p,i)=>part(u,p,i)).join("")}</details>`;
+    h+=`<details class="unit" data-u="${u.id}"><summary class="strip ${art?"":"noart"}" ${art?`style="--art:url('${art.s}')${art.ai?';--ap:center 20%':''}"`:""}><div class="nm"><b${u.title.length>20?' class="two"':""}><span>${esc(u.title)}</span></b></div><div class="pts">${pts}<small>PTS</small></div>${CHEV}</summary>${heroArt(u)}<div class="umeta"><span class="usub">${esc(u.tag&&!sub.includes(u.tag)?u.tag+" · "+sub:sub)}</span><span class="sumline">${atk}</span>${enhs.length?`<div class="seals">${enhs.map(x=>`<span class="sealtag">${esc(x)}</span>`).join("")}</div>`:""}</div>${atkBlock(u)}${u.parts.map((p,i)=>`<details class="dsd" id="ds-${u.id}-${i}"><summary><span>${esc(DS[p.key].name)}</span><small>${p.pts?p.pts+" pts · ":""}${esc((p.role||"").split(" ·")[0])}</small></summary>${part(u,p,i)}</details>`).join("")}</details>`;
     sec.h+=h;
   });
   secs.forEach(s=>{h+=cgroup(`a:${LISTS.active}:${s.g}`,"sect",`<span>${esc(s.g)}</span>`,s.h,`${s.n} unit${s.n>1?"s":""} · ${s.pts.toLocaleString("en-GB")} pts`);});
-  const open=[...document.querySelectorAll("#army details[open]")].map(d=>d.dataset.u);
+  const open=[...document.querySelectorAll("#army details.unit[open]")].map(d=>d.dataset.u),openDs=[...document.querySelectorAll("#army details.dsd[open]")].map(d=>d.id);
   army.innerHTML=h;
-  open.forEach(id=>{const d=army.querySelector(`[data-u="${id}"]`);if(d)d.open=true;});
+  open.forEach(id=>{const d=army.querySelector(`[data-u="${id}"]`);if(d)d.open=true;});openDs.forEach(id=>{const d=document.getElementById(id);if(d)d.open=true;});
 }
 
 /* ---------- HOME + PASTE ---------- */
@@ -2265,6 +2271,7 @@ const army=document.getElementById("army"),strats=document.getElementById("strat
 function openList(id){loadList(id);document.getElementById("phases").innerHTML="";renderAll();window._cp=S.cp;
   document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab==="army"));setView("list");}
 document.addEventListener("click",e=>{
+  const dl=e.target.closest&&e.target.closest("a.dsl");if(dl){e.preventDefault();const d=document.getElementById("ds-"+dl.dataset.ds);if(d){d.open=true;d.scrollIntoView({block:"start",behavior:"smooth"});d.classList.add("flash");setTimeout(()=>d.classList.remove("flash"),1200);}return;}
   const t=e.target.closest("button"); if(!t) return; const a=t.dataset;
   if(a.tab){switchTab(t);return;}
   if(t.id==="statusBtn"){const p=document.getElementById("statusPop");p.hidden=!p.hidden;t.setAttribute("aria-expanded",String(!p.hidden));return;}
