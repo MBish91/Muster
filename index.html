@@ -2441,6 +2441,7 @@ function bGroups(u){
   else g=((x&&x.comp)||[]).map(c=>{const m=String(c).match(/^(\d+)(?:-(\d+))?\s+(.*?)(?:\s+models?)?$/i);return m?{name:m[3],min:+m[1],max:+(m[2]||m[1]),wep:[]}:null;}).filter(Boolean);
   if(!g.length)g=[{name:u.name,min:1,max:1,wep:[]}];
   const tot=P&&P.pts&&P.pts[u.t||0]?P.pts[u.t||0][0]:g.reduce((a,m)=>a+m.min,0);
+  if(g.every(m=>m.c)&&P)return g.map(m=>({...m,n:m.c[Math.min(u.t||0,m.c.length-1)]}));
   let rem=tot-g.reduce((a,m)=>a+m.min,0);
   return g.map(m=>{let n=m.min;if(rem>0&&m.max>m.min){const add=Math.min(rem,m.max-m.min);n+=add;rem-=add;}return {...m,n};});
 }
@@ -2518,8 +2519,8 @@ function bUnitLines(u,role,grp,warlord){
     t+=`  • ${g.n}x ${g.name}\n`;
     if(!P||!g.wep||!g.wep.length)return;
     const m={};g.wep.forEach(w=>m[w]=g.n);
-    (P.opts||[]).forEach((o,k)=>{if(o.who!==g.name)return;((u.wg||{})[k]||[]).forEach(c=>{if(!c)return;if(o.swap)m[o.swap]=Math.max(0,(m[o.swap]||0)-1);m[c]=(m[c]||0)+1;});});
-    Object.keys(m).forEach(w=>{if(m[w]>0)t+=`     ◦ ${m[w]}x ${w}\n`;});
+    (P.opts||[]).forEach((o,k)=>{if(o.who!==g.name)return;((u.wg||{})[k]||[]).forEach(c=>{if(!c)return;if(o.swap)(m[o.swap]!=null?[o.swap]:o.swap.split(/, | and /)).forEach(w=>{m[w]=Math.max(0,(m[w]||0)-1);});c.split(/ \+ /).forEach(w=>{m[w]=(m[w]||0)+1;});});});
+    Object.keys(m).forEach(w=>{if(m[w]>0)t+=`     ◦ ${m[w]}x ${w.replace(/ - /g," – ")}\n`;});
   });
   return t;
 }
