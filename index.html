@@ -593,6 +593,22 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:var(--neon)!im
 .note{color:#7f8a9c}
 ::selection{background:rgba(62,230,255,.3)}
 
+/* account avatar */
+header.top{position:sticky}
+#sbbar{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:60}
+#sbav{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;padding:0;cursor:pointer;color:#9aa6b8;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);touch-action:manipulation;transition:border-color .2s,box-shadow .2s}
+#sbav svg{width:20px;height:20px}
+#sbav.in{color:#dffaff;border-color:rgba(62,230,255,.55);box-shadow:0 0 14px -4px rgba(62,230,255,.7)}
+#sbav[aria-expanded="true"]{background:rgba(62,230,255,.14)}
+#sbmenu{position:absolute;right:0;top:46px;min-width:220px;max-width:calc(100vw - 24px);padding:14px;border-radius:16px;background:rgba(10,14,20,.98);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.1);box-shadow:0 20px 50px -20px rgba(0,0,0,.9);animation:mIn .18s cubic-bezier(.16,1,.3,1)}
+#sbmenu[hidden]{display:none}
+@keyframes mIn{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}
+#sbmenu p{margin:0 0 12px;font:500 12.5px/1.4 var(--sans);color:var(--muted)}
+#sbmenu p b{display:block;margin-top:2px;color:#e9eef6;font-weight:600;word-break:break-all}
+#sbmenu button{width:100%;height:40px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#e9eef6;font:600 14px var(--cond);cursor:pointer}
+#sbmenu #sbin{background:linear-gradient(135deg,#3ee6ff,#8b7bff);border:0;color:#041018}
+.brand{padding-right:52px}
+#sbov .fig{display:none}
 /* phase rail */
 .phwrap{display:grid;grid-template-columns:84px minmax(0,1fr);gap:12px;align-items:start}
 .phbar.rail{position:sticky!important;top:calc(var(--hh,150px) + 10px)!important;display:flex;flex-direction:column;gap:6px;overflow:visible;margin:0!important;padding:0!important;background:none!important;z-index:2}
@@ -2519,12 +2535,19 @@ const shim={collection:()=>({doc:()=>({
     if(!r.ok)throw new Error("save failed");}})})};
 async function pull(){if(!SES)return;const keepDB=DB,keepU=USER;DB=shim;USER={id:async()=>SES&&SES.uid,isOwner:async()=>false};
   try{await cloudLists();}catch(e){}finally{DB=keepDB;USER=keepU;}}
-function bar(){let b=document.getElementById("sbbar");if(!b){b=document.createElement("div");b.id="sbbar";
-  b.style.cssText="position:fixed;left:8px;bottom:8px;z-index:50;font:12px system-ui;background:rgba(18,11,12,.85);color:#e9dccb;border:1px solid #6d5035;border-radius:14px;padding:5px 10px;display:flex;gap:8px;align-items:center";document.body.appendChild(b);}
-  b.innerHTML=SES?`<span>${(SES.email||"").replace(/</g,"&lt;")}</span><button id="sbout" style="background:none;border:0;color:#c9a24a;font:inherit;cursor:pointer">Sign out</button>`:`<span>Local only</span><button id="sbin" style="background:none;border:0;color:#c9a24a;font:inherit;cursor:pointer">Sign in</button>`;
+function bar(){const host=document.querySelector("header.top")||document.body;let b=document.getElementById("sbbar");
+  if(!b){b=document.createElement("div");b.id="sbbar";host.appendChild(b);}
+  const ico='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4.8 19.2c1.3-3.2 4-4.8 7.2-4.8s5.9 1.6 7.2 4.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+  const em=SES?(SES.email||"").replace(/</g,"&lt;"):"";
+  b.innerHTML=`<button id="sbav" class="${SES?"in":""}" aria-label="${SES?"Account":"Sign in"}" aria-haspopup="true" aria-expanded="false">${ico}</button>
+  <div id="sbmenu" hidden>${SES?`<p>Signed in as<b>${em}</b></p><button id="sbout">Sign out</button>`:`<p>Your lists are saved on this phone only.</p><button id="sbin">Sign in to sync</button>`}</div>`;
+  const av=document.getElementById("sbav"),mn=document.getElementById("sbmenu");
+  const shut=()=>{mn.hidden=true;av.setAttribute("aria-expanded","false");document.removeEventListener("click",out,true);};
+  const out=e=>{if(!b.contains(e.target))shut();};
+  av.onclick=()=>{const open=mn.hidden;mn.hidden=!open;av.setAttribute("aria-expanded",String(open));if(open)setTimeout(()=>document.addEventListener("click",out,true),0);else shut();};
   const o=document.getElementById("sbout"),i=document.getElementById("sbin");
-  if(o)o.onclick=()=>{SES=null;try{localStorage.removeItem("muster-sb");}catch(e){}login();bar();};
-  if(i)i.onclick=()=>{try{localStorage.removeItem("muster-sb-skip");}catch(e){}login();};}
+  if(o)o.onclick=()=>{shut();SES=null;try{localStorage.removeItem("muster-sb");}catch(e){}login();bar();};
+  if(i)i.onclick=()=>{shut();try{localStorage.removeItem("muster-sb-skip");}catch(e){}login();};}
 const CSS=`#sbov{position:fixed;inset:0;z-index:100;overflow:auto;background:#0b0907;color:#f3ece4;font-family:"Source Sans 3",system-ui,sans-serif;-webkit-overflow-scrolling:touch}
 #sbov .bg{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 38%,rgba(11,9,7,0) 0%,rgba(11,9,7,.55) 60%,#0b0907 100%),linear-gradient(0deg,#0b0907 4%,rgba(11,9,7,.35) 45%,rgba(11,9,7,.7)),radial-gradient(circle at 25% 80%,rgba(255,110,40,.28),transparent 45%),radial-gradient(circle at 80% 70%,rgba(255,170,60,.2),transparent 42%),#0b0907;animation:sbz 18s ease-in-out infinite alternate}
 @keyframes sbz{from{transform:scale(1.05)}to{transform:scale(1.14) translateX(-2%)}}
