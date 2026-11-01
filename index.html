@@ -2450,10 +2450,11 @@ whBoot();
 if(window.claude&&claude.use)initCaps();
 
 /* swipe left/right on the game screens to change tab */
-(()=>{let x0=0,y0=0,ok=false;const m=document.querySelector("main");if(!m)return;
-  m.addEventListener("touchstart",e=>{const t=e.touches[0];x0=t.clientX;y0=t.clientY;ok=LISTS.view==="list"&&e.touches.length===1&&!e.target.closest(".tw,.pchips,.chips,.rounds,textarea,input,select,table");},{passive:true});
+function inHScroll(el){for(;el&&el!==document.body;el=el.parentElement){if(el.scrollWidth>el.clientWidth+2){const o=getComputedStyle(el).overflowX;if(o==="auto"||o==="scroll")return true;}}return false;}
+(()=>{let x0=0,y0=0,t0=0,ok=false;const m=document.querySelector("main");if(!m)return;
+  m.addEventListener("touchstart",e=>{const t=e.touches[0];x0=t.clientX;y0=t.clientY;t0=Date.now();ok=LISTS.view==="list"&&e.touches.length===1&&!document.documentElement.classList.contains("dsm-lock")&&!e.target.closest(".tw,.phbar,.filter,.pchips,.chips,.rounds,textarea,input,select,table")&&!inHScroll(e.target);},{passive:true});
   m.addEventListener("touchend",e=>{if(!ok)return;ok=false;const t=e.changedTouches[0],dx=t.clientX-x0,dy=t.clientY-y0;
-    if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*2)return;
+    if(Date.now()-t0>600||Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*2)return;
     const tabs=[...document.querySelectorAll(".tabs button")],i=tabs.findIndex(b=>b.getAttribute("aria-selected")==="true"),n=tabs[i+(dx<0?1:-1)];
     if(n)switchTab(n);},{passive:true});})();
 
