@@ -1237,7 +1237,7 @@ function setView(v){
     document.documentElement.dataset.faction="home";document.getElementById("crest").innerHTML=LOGO;
     document.getElementById("lname").textContent="Muster";document.getElementById("lmeta").textContent=`${LISTS.lists.length} saved list${LISTS.lists.length===1?"":"s"}`;document.title="Muster";}
   else if(v==="paste"){renderPaste();paste.hidden=false;document.getElementById("lname").textContent="New list";}
-  else if(v==="build"){renderBuild();document.getElementById("build").hidden=false;document.getElementById("lname").textContent="Build a list";if(BLD.fac&&!bData())whLoad(BLD.fac).then(renderBuild);}
+  else if(v==="build"){renderBuild();document.getElementById("build").hidden=false;document.getElementById("lname").textContent="Build a list";if(BLD.fac&&!bData())bLoadFac(BLD.fac).then(renderBuild);}
   else{const t=document.querySelector('.tabs button[aria-selected="true"]')||document.querySelector('.tabs button');
     document.getElementById(t.dataset.tab).hidden=false;requestAnimationFrame(moveInd);}
   window.scrollTo({top:0,behavior:"instant"});
@@ -2418,7 +2418,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 const BSIZES=[{p:500,n:"Combat Patrol",dp:null},{p:1000,n:"Incursion",dp:2,en:2},{p:2000,n:"Strike Force",dp:3,en:4},{p:3000,n:"Onslaught",dp:null}];
 const BDISP=["Take and Hold","Purge the Foe","Disruption","Reconnaissance","Priority Assets"];
 const BFAC={"space-marines":"Space Marines","adepta-sororitas":"Adepta Sororitas","adeptus-custodes":"Adeptus Custodes","adeptus-mechanicus":"Adeptus Mechanicus","astra-militarum":"Astra Militarum","grey-knights":"Grey Knights","imperial-agents":"Imperial Agents","imperial-knights":"Imperial Knights","chaos-daemons":"Chaos Daemons","chaos-knights":"Chaos Knights","chaos-space-marines":"Chaos Space Marines","death-guard":"Death Guard","emperor-s-children":"Emperor’s Children","thousand-sons":"Thousand Sons","world-eaters":"World Eaters","aeldari":"Aeldari","drukhari":"Drukhari","genestealer-cults":"Genestealer Cults","leagues-of-votann":"Leagues of Votann","necrons":"Necrons","orks":"Orks","t-au-empire":"T’au Empire","tyranids":"Tyranids"};
-let BLD={step:1,size:2000,fac:"",chap:"",dets:[],disp:"",units:[],q:"",name:""};
+let BLD={step:1,size:2000,fac:"",chap:"",dets:[],disp:"",units:[],q:"",name:""},BPTS={};
 try{const r=localStorage.getItem("muster-build");if(r)BLD={...BLD,...JSON.parse(r)};}catch(e){}
 const bSave=()=>{try{localStorage.setItem("muster-build",JSON.stringify(BLD));}catch(e){}};
 const bTitle=s=>String(s||"").toLowerCase().replace(/(^|[\s'’-])\w/g,c=>c.toUpperCase());
@@ -2429,9 +2429,46 @@ function bUnits(){const d=bData();if(!d)return [];const seen=new Set();return d.
   if(BLD.chap&&f.some(k=>k!=="ADEPTUS ASTARTES"&&k!==BLD.chap&&bChapters().includes(k)))return false;
   if(seen.has(x.name))return false;seen.add(x.name);return true;});}
 const bDP=d=>parseInt(String(d.dp||"1"))||1;
+const bX=n=>{const d=bData();return d&&d.ds.find(x=>x.name===n)||null;};
+const bK=x=>((x&&x.keywords)||"").toLowerCase();
+const bIsChar=x=>/character/.test(bK(x)),bIsEpic=x=>/epic hero/.test(bK(x));
+function bRole(x){const c=((x&&x.core)||[]);return c.includes("Support")?"Support":c.includes("Leader")?"Leader":"";}
+function bLeads(x){if(!x)return [];const P=BPTS[x.name];if(P&&P.leads&&P.leads.length)return P.leads;const a=(x.abilities||[]).find(a=>a[0]==="Leader");const m=a&&String(a[1]).match(/Can lead:\s*(.+?)\.?$/i);return m?m[1].split(/,\s*/):[];}
+function bUnitPts(u){const P=BPTS[u.name];return P&&P.pts&&P.pts[u.t||0]?P.pts[u.t||0][1]:(+u.pts||0);}
+function bGroups(u){
+  const x=bX(u.name),P=BPTS[u.name];let g;
+  if(P&&P.models&&P.models.length)g=P.models.map(m=>({name:m.name,min:m.min,max:m.max,wep:m.wep||[]}));
+  else g=((x&&x.comp)||[]).map(c=>{const m=String(c).match(/^(\d+)(?:-(\d+))?\s+(.*?)(?:\s+models?)?$/i);return m?{name:m[3],min:+m[1],max:+(m[2]||m[1]),wep:[]}:null;}).filter(Boolean);
+  if(!g.length)g=[{name:u.name,min:1,max:1,wep:[]}];
+  const tot=P&&P.pts&&P.pts[u.t||0]?P.pts[u.t||0][0]:g.reduce((a,m)=>a+m.min,0);
+  let rem=tot-g.reduce((a,m)=>a+m.min,0);
+  return g.map(m=>{let n=m.min;if(rem>0&&m.max>m.min){const add=Math.min(rem,m.max-m.min);n+=add;rem-=add;}return {...m,n};});
+}
+function bSlots(u,o,gs){const g=gs.find(m=>m.name===o.who)||gs[0];const tot=gs.reduce((a,m)=>a+m.n,0);
+  let k=o.per?Math.floor(tot/o.per)*(o.n||1):(o.n||1);return Math.max(0,Math.min(k,Math.max(g?g.n:1,0),8));}
+function bEnhRestr(e){const d=bData();if(!d)return "";const doc=(typeof TXT!=="undefined")&&TXT[qid("det",e.det)];const en=doc&&(doc.enhancements||[]).find(z=>nrm(z.name)===nrm(e.n));
+  const m=en&&String(en.text||"").match(/^(.*?)\s+(?:model|unit)s?\s+only/i);return m?m[1]:"";}
+function bEnhOk(u,e){const x=bX(u.name);if(!x||bIsEpic(x))return false;const ch=bIsChar(x),up=!!e.up;
+  if(up?ch:!ch)return false;
+  const r=bEnhRestr(e).replace(/\(.*?\)/g,"");if(!r)return true;
+  const hay=(" "+bK(x)+" "+((x.fkw||[]).join(" "))+" "+x.name+" ").toLowerCase();
+  const toks=r.split(/\s+/).filter(Boolean);
+  const words=[];toks.forEach(t=>{if(/^(ONLY|AND)$/i.test(t))return;words.push(t);});
+  return words.every(t=>t.split("/").some(a=>hay.includes(a.toLowerCase().replace(/[^a-z' -]/g,""))));}
 function bUsedDP(){const d=bData();return d?BLD.dets.reduce((a,n)=>{const t=d.dets.find(x=>x.n===n);return a+(t?bDP(t):0);},0):0;}
-function bEnhPool(){const d=bData();const out=[];if(d)BLD.dets.forEach(n=>{const t=d.dets.find(x=>x.n===n);if(t)t.enh.forEach(e=>out.push({n:e.n,pts:e.pts,det:t.n}));});return out;}
-function bTotal(){return BLD.units.reduce((a,u)=>a+(+u.pts||0)+((bEnhPool().find(e=>e.n===u.enh)||{}).pts||0),0);}
+function bEnhPool(){const d=bData();const out=[];if(d)BLD.dets.forEach(n=>{const t=d.dets.find(x=>x.n===n);if(t)t.enh.forEach(e=>out.push({n:e.n,pts:e.pts,det:t.n,up:e.up}));});return out;}
+function bTotal(){const pool=bEnhPool();return BLD.units.reduce((a,u)=>a+bUnitPts(u)+((pool.find(e=>e.n===u.enh)||{}).pts||0),0);}
+function bBodyOpts(i){const u=BLD.units[i],x=bX(u.name),role=bRole(x),leads=bLeads(x).map(nrm);if(!role)return [];
+  return BLD.units.map((b,j)=>{if(j===i)return null;const bx=bX(b.name);if(!bx||bIsChar(bx))return null;
+    if(role==="Leader"&&!leads.includes(nrm(b.name)))return null;
+    const taken=BLD.units.some((o,k)=>k!==i&&o.lead===j&&bRole(bX(o.name))===role);return {j,name:b.name,taken};}).filter(Boolean);}
+function bWarn(){const w=[],sz=bSz(),pool=bEnhPool(),used={};let ne=0,nu=0;
+  BLD.units.forEach(u=>{if(!u.enh)return;const e=pool.find(z=>z.n===u.enh);if(!e)return;used[u.enh]=(used[u.enh]||0)+1;if(e.up)nu++;else ne++;});
+  if(sz.en&&ne>sz.en)w.push(`${ne} enhancements taken; ${sz.n} allows ${sz.en}.`);if(nu>3)w.push(`${nu} upgrades taken; the limit is 3.`);
+  Object.keys(used).forEach(k=>{const e=pool.find(z=>z.n===k);if(used[k]>1&&e&&!e.up)w.push(`${k} is taken more than once; each enhancement can be used once.`);});
+  const tot=bTotal();if(tot>BLD.size)w.push(`${tot-BLD.size} points over the ${BLD.size.toLocaleString("en-GB")} limit.`);
+  BLD.units.forEach(u=>{const x=bX(u.name);if(bRole(x)&&u.lead==null&&false)w.push(u.name);});
+  return w;}
 function renderBuild(){
   const el=document.getElementById("build");if(!el)return;
   const chip=(a,on,txt,x="")=>`<button class="chip${on?" on":""}" data-b="${a}" ${x}>${esc(txt)}</button>`;
@@ -2450,31 +2487,54 @@ function renderBuild(){
     }
     el.innerHTML=h+`</div>`;return;
   }
-  const d=bData(),sz=bSz(),tot=bTotal(),q=BLD.q.toLowerCase();
-  const pool=bUnits().filter(u=>!q||u.name.toLowerCase().includes(q)),enh=bEnhPool(),nenh=BLD.units.filter(u=>u.enh).length;
+  const sz=bSz(),tot=bTotal(),q=BLD.q.toLowerCase(),pool=bUnits().filter(u=>!q||u.name.toLowerCase().includes(q)),enh=bEnhPool(),warn=bWarn();
+  const usedEnh=new Set(BLD.units.map(u=>u.enh).filter(Boolean));
+  const card=(u,i)=>{const x=bX(u.name),P=BPTS[u.name],gs=bGroups(u),role=bRole(x),bo=bBodyOpts(i),eo=enh.filter(e=>bEnhOk(u,e));
+    const tiers=P&&P.pts&&P.pts.length>1?`<label>Size <select data-b="usz" data-v="${i}">${P.pts.map((t,k)=>`<option value="${k}"${(u.t||0)===k?" selected":""}>${t[0]} models · ${t[1]} pts</option>`).join("")}</select></label>`:"";
+    const manual=P&&P.pts&&P.pts.length?"":`<label>Points <input type="number" inputmode="numeric" min="0" max="9999" value="${u.pts||""}" placeholder="0" data-b="pts" data-v="${i}"></label>`;
+    const att=role&&bo.length?`<label>${role==="Leader"?"Lead":"Support"} <select data-b="uld" data-v="${i}"><option value="-1">Not attached</option>${bo.map(o=>`<option value="${o.j}"${u.lead===o.j?" selected":""}${o.taken?" disabled":""}>${esc(o.name)}${o.taken?" (taken)":""}</option>`).join("")}</select></label>`:"";
+    const en=eo.length?`<label>${bEnhRestr(eo[0])&&false?"":"Enhancement"} <select data-b="enh" data-v="${i}"><option value="">None</option>${eo.map(e=>`<option value="${esc(e.n)}"${u.enh===e.n?" selected":""}${usedEnh.has(e.n)&&u.enh!==e.n&&!e.up?" disabled":""}>${esc(e.n)}${e.pts?` (+${e.pts})`:""}${e.up?" · upgrade":""}</option>`).join("")}</select></label>`:"";
+    const opts=(P&&P.opts||[]).map((o,k)=>{const n=bSlots(u,o,gs);if(!n)return "";const ch=((u.wg||{})[k]||[]);
+      const choices=o.swap?o.for:[o.add];
+      return `<div class="bopt"><span>${o.swap?`${esc(o.who)}: replace ${esc(o.swap)}`:`${esc(o.who)}: add`}${o.note?` <em>${esc(o.note)}</em>`:""}</span>${Array.from({length:n},(_,s)=>`<select data-b="uwg" data-v="${i}" data-o="${k}" data-s="${s}"><option value="">${o.swap?"Keep "+esc(o.swap):"None"}</option>${choices.map(c=>`<option${ch[s]===c?" selected":""}>${esc(c)}</option>`).join("")}</select>`).join("")}</div>`;}).join("");
+    return `<div class="bunit"><div class="bu1"><b>${esc(u.name)}<small> ${bUnitPts(u)+(((enh.find(e=>e.n===u.enh)||{}).pts)||0)} pts</small></b><button class="chip" data-b="rm" data-v="${i}" aria-label="Remove">✕</button></div>
+      <div class="bu2">${tiers}${manual}${att}${en}</div>${opts?`<div class="bopts">${opts}</div>`:""}</div>`;};
   el.innerHTML=`<h2 class="sect">${esc(BFAC[BLD.fac]||"")}${BLD.chap?" · "+esc(bTitle(BLD.chap)):""}</h2>
   <div class="panel bpanel"><div class="btot ${tot>BLD.size?"over":""}"><b>${tot.toLocaleString("en-GB")}</b> / ${BLD.size.toLocaleString("en-GB")} pts<span>${esc(BLD.dets.join(", "))} · ${esc(BLD.disp||"no disposition")}</span></div>
-  ${BLD.units.length?`<div class="blist">${BLD.units.map((u,i)=>`<div class="bunit"><div class="bu1"><b>${esc(u.name)}</b><button class="chip" data-b="rm" data-v="${i}" aria-label="Remove">✕</button></div>
-   <div class="bu2"><label>Points <input type="number" inputmode="numeric" min="0" max="9999" value="${u.pts||""}" placeholder="0" data-b="pts" data-v="${i}"></label>
-   ${enh.length?`<label>Enhancement <select data-b="enh" data-v="${i}"><option value="">None</option>${enh.map(e=>`<option value="${esc(e.n)}"${u.enh===e.n?" selected":""}>${esc(e.n)}${e.pts?` (+${e.pts})`:""}</option>`).join("")}</select></label>`:""}</div></div>`).join("")}</div>`:`<p class="note">Add units below. Points aren't in the library yet, so type each unit's cost from your points sheet and the total counts up.</p>`}
-  ${sz.en&&nenh>sz.en?`<p class="note" style="color:#a82a2a">That's ${nenh} enhancements; ${sz.n} allows ${sz.en}.</p>`:""}
+  ${warn.map(x=>`<p class="note" style="color:#a82a2a;margin:2px 0">${esc(x)}</p>`).join("")}
+  ${BLD.units.length?`<div class="blist">${BLD.units.map(card).join("")}</div>`:`<p class="note">Add units below. Points are filled in for units whose costs are in the library; for the rest, type the cost from your points sheet.</p>`}
   <h4>Add a unit</h4><input class="bsearch" type="search" placeholder="Search units" value="${esc(BLD.q)}" data-b="q">
   <div class="blist">${pool.slice(0,60).map(u=>`<button class="badd" data-b="add" data-v="${esc(u.name)}"><span>${esc(u.name)}</span><i>+</i></button>`).join("")||`<p class="note">No units match.</p>`}${pool.length>60?`<p class="note">Showing 60 of ${pool.length}. Search to narrow.</p>`:""}</div>
   <div class="row"><button class="btn pri" data-b="finish"${BLD.units.length?"":" disabled"}>Build army</button><button class="btn" data-b="back">Back</button></div></div>`;
 }
+function bUnitLines(u,role,grp,warlord){
+  const x=bX(u.name),P=BPTS[u.name],pool=bEnhPool(),e=pool.find(z=>z.n===u.enh),p=bUnitPts(u)+((e&&e.pts)||0),gs=bGroups(u);
+  let t=`\n${u.name} (${p} Points)\n`;
+  if(role)t+=`  • Attached as: ${role}\n`;
+  if(warlord)t+="  • Warlord\n";
+  if(u.enh)t+=`  • Enhancements: ${u.enh}${e&&e.up?" (Upgrade)":""}\n`;
+  const own=(P&&P.models&&P.models.length)?null:null;
+  gs.forEach(g=>{
+    t+=`  • ${g.n}x ${g.name}\n`;
+    if(!P||!g.wep||!g.wep.length)return;
+    const m={};g.wep.forEach(w=>m[w]=g.n);
+    (P.opts||[]).forEach((o,k)=>{if(o.who!==g.name)return;((u.wg||{})[k]||[]).forEach(c=>{if(!c)return;if(o.swap)m[o.swap]=Math.max(0,(m[o.swap]||0)-1);m[c]=(m[c]||0)+1;});});
+    Object.keys(m).forEach(w=>{if(m[w]>0)t+=`     ◦ ${m[w]}x ${w}\n`;});
+  });
+  return t;
+}
 function bRaw(){
-  const d=bData(),sz=bSz(),tot=bTotal(),enh=bEnhPool(),dp=bUsedDP();
-  const gr=u=>{const k=(u.keywords||"").toLowerCase();return /character/.test(k)?"CHARACTERS":/battleline/.test(k)?"BATTLELINE":/transport/.test(k)?"DEDICATED TRANSPORTS":"OTHER DATASHEETS";};
-  const by={};BLD.units.forEach(u=>{const x=d.ds.find(y=>y.name===u.name);(by[gr(x||{})]=by[gr(x||{})]||[]).push({u,x});});
+  const d=bData(),sz=bSz(),tot=bTotal(),dp=bUsedDP(),U=BLD.units;
+  const gr=u=>{const k=bK(bX(u.name));return /character/.test(k)?"CHARACTERS":/battleline/.test(k)?"BATTLELINE":/transport/.test(k)?"DEDICATED TRANSPORTS":"OTHER DATASHEETS";};
   const hdr=BLD.fac==="space-marines"?["Adeptus Astartes",BLD.chap?bTitle(BLD.chap):"Space Marines"]:[BFAC[BLD.fac]];
   let t=`${BLD.name||"New "+BFAC[BLD.fac]+" list"} (${tot} Points)\n\n${hdr.join("\n")}\n${BLD.dets.join(", ")} (${dp} Detachment Point${dp===1?"":"s"})\n${BLD.disp||"Take and Hold"}\n${sz.n} (${BLD.size.toLocaleString("en-GB")} Points)\n`;
-  ["CHARACTERS","BATTLELINE","DEDICATED TRANSPORTS","OTHER DATASHEETS"].forEach(g=>{if(!by[g])return;t+=`\n${g}\n`;by[g].forEach(({u,x},i)=>{
-    const e=enh.find(z=>z.n===u.enh),p=(+u.pts||0)+((e&&e.pts)||0);
-    t+=`\n${u.name} (${p} Points)\n`;
-    if(g==="CHARACTERS"&&i===0&&g===Object.keys(by)[0])t+="  • Warlord\n";
-    if(u.enh)t+=`  • Enhancements: ${u.enh}\n`;
-    const m=((x&&x.comp)||[])[0]||"",mm=m.match(/^(\d+)(?:-\d+)?\s+(.*?)(?:\s+models?)?$/i);
-    t+=`  • ${mm?mm[1]:1}x ${mm?mm[2]:u.name}\n`;});});
+  const wl=U.findIndex(u=>bIsChar(bX(u.name)));let wdone=false;
+  const bodies=[...new Set(U.map(u=>u.lead).filter(j=>j!=null&&j>=0))],attached=new Set();
+  if(bodies.length){t+="\nATTACHED UNITS\n";bodies.forEach((j,n)=>{t+=`\nAttached unit ${n+1}\n`;
+    U.forEach((u,i)=>{if(u.lead===j){attached.add(i);t+=bUnitLines(u,bRole(bX(u.name))||"Leader",null,i===wl&&!wdone&&(wdone=true));}});
+    attached.add(j);t+=bUnitLines(U[j],"Bodyguard",null,false);});}
+  const by={};U.forEach((u,i)=>{if(attached.has(i))return;(by[gr(u)]=by[gr(u)]||[]).push([u,i]);});
+  ["CHARACTERS","BATTLELINE","DEDICATED TRANSPORTS","OTHER DATASHEETS"].forEach(g=>{if(!by[g])return;t+=`\n${g}\n`;by[g].forEach(([u,i])=>{t+=bUnitLines(u,"",g,i===wl&&!wdone&&(wdone=true));});});
   return t;
 }
 async function bFinish(btn){
@@ -2485,21 +2545,27 @@ async function bFinish(btn){
   BLD={step:1,size:BLD.size,fac:"",chap:"",dets:[],disp:"",units:[],q:"",name:""};bSave();
   openList(id);queueText();if(typeof syncOnCreate==="function")try{syncOnCreate();}catch(e){}
 }
+async function bLoadFac(v){await whLoad(v);try{await seedTxt();}catch(e){}if(!BPTS.__l)BPTS.__l={};if(!BPTS.__l[v]){BPTS.__l[v]=1;try{const r=await fetch("data/pts_"+v+".json");if(r.ok)Object.assign(BPTS,await r.json());}catch(e){}}}
 document.addEventListener("input",e=>{const t=e.target;if(!t.dataset||!t.dataset.b)return;
   if(t.dataset.b==="pts"){BLD.units[+t.dataset.v].pts=Math.max(0,Math.min(9999,+t.value||0));bSave();const tt=document.querySelector(".btot b");if(tt)tt.textContent=bTotal().toLocaleString("en-GB");}
   else if(t.dataset.b==="q"){BLD.q=t.value;renderBuild();const s=document.querySelector(".bsearch");if(s){s.focus();s.setSelectionRange(s.value.length,s.value.length);}}});
-document.addEventListener("change",e=>{const t=e.target;if(t.dataset&&t.dataset.b==="enh"){BLD.units[+t.dataset.v].enh=t.value;bSave();renderBuild();}});
+document.addEventListener("change",e=>{const t=e.target;if(!t.dataset||!t.dataset.b)return;const a=t.dataset.b,i=+t.dataset.v,u=BLD.units[i];
+  if(a==="enh"){u.enh=t.value;}
+  else if(a==="usz"){u.t=+t.value;u.wg={};}
+  else if(a==="uld"){const j=+t.value;u.lead=j;}
+  else if(a==="uwg"){u.wg=u.wg||{};const k=+t.dataset.o;u.wg[k]=u.wg[k]||[];u.wg[k][+t.dataset.s]=t.value;}
+  else return;bSave();renderBuild();});
 document.addEventListener("click",async e=>{
   const t=e.target.closest("button[data-b]");if(!t)return;const a=t.dataset.b,v=t.dataset.v;
   if(a==="size"){BLD.size=+v;}
-  else if(a==="fac"){BLD.fac=v;BLD.chap="";BLD.dets=[];BLD.units=[];renderBuild();await whLoad(v);}
+  else if(a==="fac"){BLD.fac=v;BLD.chap="";BLD.dets=[];BLD.units=[];renderBuild();await bLoadFac(v);}
   else if(a==="chap"){BLD.chap=v;BLD.units=BLD.units.filter(u=>bUnits().some(x=>x.name===u.name));}
   else if(a==="det"){BLD.dets=BLD.dets.includes(v)?BLD.dets.filter(x=>x!==v):[...BLD.dets,v];}
   else if(a==="disp"){BLD.disp=BLD.disp===v?"":v;}
   else if(a==="next"){BLD.step=2;BLD.q="";window.scrollTo({top:0});}
   else if(a==="back"){BLD.step=1;}
-  else if(a==="add"){BLD.units.push({name:v,pts:0,enh:""});BLD.q="";}
-  else if(a==="rm"){BLD.units.splice(+v,1);}
+  else if(a==="add"){BLD.units.push({name:v,pts:0,t:0,enh:"",lead:-1,wg:{}});BLD.q="";}
+  else if(a==="rm"){const i=+v;BLD.units.splice(i,1);BLD.units.forEach(u=>{if(u.lead===i)u.lead=-1;else if(u.lead>i)u.lead--;});}
   else if(a==="finish"){bSave();return bFinish(t);}
   else return;
   bSave();renderBuild();
