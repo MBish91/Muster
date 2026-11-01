@@ -594,6 +594,7 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:var(--neon)!im
 ::selection{background:rgba(62,230,255,.3)}
 
 /* datasheet modal */
+.dsmore{margin:0;padding:12px 16px 16px;font-size:13px;color:var(--muted)}
 #dsm{position:fixed;inset:0;z-index:100;display:flex;padding:max(10px,env(safe-area-inset-top)) 8px max(10px,env(safe-area-inset-bottom));background:rgba(2,4,8,.6);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);opacity:0;transition:opacity .22s ease}
 #dsm[hidden]{display:none}
 #dsm.on{opacity:1}
@@ -1275,7 +1276,7 @@ function renderArmy(){
     const pts=u.parts.reduce((a,p)=>a+p.pts,0),enhs=u.parts.map(p=>p.enh).filter(Boolean);
     const sub=u.parts.length>1?[...new Set(u.parts.map(p=>(p.role||"Unit").split(" ·")[0]))].join(" + "):(u.parts[0].role||"");
     const atk=(()=>{const t=unitAttacks(u);return `${fmtT(t.R)} <em>ranged</em> · ${fmtT(t.M)} <em>melee attacks</em>`})();
-        h+=`<details class="unit" data-u="${u.id}"><summary class="uhead"><div class="nm"><b>${esc(u.title)}</b><small>${esc(u.tag&&!sub.includes(u.tag)?u.tag+" · "+sub:sub)}</small></div><div class="pts">${pts}<small>pts</small></div>${CHEV}</summary>${heroArt(u)}<div class="umeta">${enhs.length?`<div class="seals">${enhs.map(x=>`<span class="sealtag">${esc(x)}</span>`).join("")}</div>`:""}</div>${atkBlock(u)}${u.parts.map((p,i)=>`<details class="dsd" id="ds-${u.id}-${i}"><summary><span>${esc(DS[p.key].name)}</span><small>${p.pts?p.pts+" pts · ":""}${esc((p.role||"").split(" ·")[0])}</small></summary>${part(u,p,i)}</details>`).join("")}</details>`;
+        h+=`<details class="unit" data-u="${u.id}"><summary class="uhead"><div class="nm"><b>${esc(u.title)}</b><small>${esc(u.tag&&!sub.includes(u.tag)?u.tag+" · "+sub:sub)}</small></div><div class="pts">${pts}<small>pts</small></div>${CHEV}</summary>${heroArt(u)}<div class="umeta">${enhs.length?`<div class="seals">${enhs.map(x=>`<span class="sealtag">${esc(x)}</span>`).join("")}</div>`:""}</div>${atkBlock(u)}${(l=>l.length?`<p class="dsmore">Datasheet${l.length>1?"s":""}: ${l.join(" · ")}</p>`:"")(u.parts.map((p,i)=>(DS[p.key].ranged.length||DS[p.key].melee.length)?"":`<a href="#" class="dsl" data-ds="${u.id}-${i}">${esc(DS[p.key].name)}</a>`).filter(Boolean))}</details>`;
     sec.h+=h;
   });
   secs.forEach(s=>{h+=cgroup(`a:${LISTS.active}:${s.g}`,"sect",`<span>${esc(s.g)}</span>`,s.h,`${s.n} unit${s.n>1?"s":""} · ${s.pts.toLocaleString("en-GB")} pts`);});
