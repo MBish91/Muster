@@ -593,6 +593,17 @@ textarea:focus,input:focus,select:focus{outline:none;border-color:var(--neon)!im
 .note{color:#7f8a9c}
 ::selection{background:rgba(62,230,255,.3)}
 
+/* phase rail */
+.phwrap{display:grid;grid-template-columns:84px minmax(0,1fr);gap:12px;align-items:start}
+.phbar.rail{position:sticky!important;top:calc(var(--hh,150px) + 10px)!important;display:flex;flex-direction:column;gap:6px;overflow:visible;margin:0!important;padding:0!important;background:none!important;z-index:2}
+.phbar.rail button{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:10px 8px 9px 11px!important;border-radius:12px!important;text-align:left;font:600 12.5px/1.15 var(--cond)!important;letter-spacing:.02em;min-height:48px;transition:background .2s,border-color .2s,color .2s}
+.phbar.rail button i{font:500 10.5px var(--mono);font-style:normal;color:#6f7a8c}
+.phbar.rail button[aria-pressed="true"] i{color:var(--neon)}
+.phbar.rail button[aria-pressed="true"]::before{content:"";position:absolute;left:-1px;top:10px;bottom:10px;width:3px;border-radius:3px;background:var(--neon);box-shadow:0 0 10px var(--neon)}
+.phbar.rail button:active{transform:scale(.97)}
+#phList{min-width:0}
+.legend i{box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
+#phList .legend{flex-wrap:wrap}
 /* datasheet modal */
 .dsmore{margin:0;padding:12px 16px 16px;font-size:13px;color:var(--muted)}
 #dsm{position:fixed;inset:0;z-index:100;display:flex;padding:max(10px,env(safe-area-inset-top)) 8px max(10px,env(safe-area-inset-bottom));background:rgba(2,4,8,.6);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);opacity:0;transition:opacity .22s ease}
@@ -1434,7 +1445,7 @@ function renderPhases(animate){
   const sec=document.getElementById("phases");
   const sig=PH.map(x=>x.k).join(",");
   if(!sec.querySelector(".phbar")||sec.dataset.sig!==sig){sec.dataset.sig=sig;
-    sec.innerHTML=`<div class="phbar" role="group" aria-label="Phase">${PH.map(x=>`<button data-ph="${x.k}">${x.n}</button>`).join("")}</div><div id="phList"></div>`;}
+    sec.innerHTML=`<div class="phwrap"><div class="phbar rail" role="group" aria-label="Phase">${PH.map(x=>`<button data-ph="${x.k}"><span>${({pre:"Deploy",cmd:"Command",move:"Move",shoot:"Shoot",charge:"Charge",fight:"Fight",opp:"Enemy",any:"Always"})[x.k]||x.n}</span><i>${x.items.length}</i></button>`).join("")}</div><div id="phList"></div></div>`;}
   const bar=sec.querySelector(".phbar");
   bar.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.ph===cur));
   let h=`<div class="legend"><span><i style="background:var(--seal)"></i>Stratagem</span>${META.fac==="sm"?`<span><i style="background:var(--ink)"></i>Doctrine</span>`:""}<span><i style="background:var(--parch)"></i>Detachment / enhancement</span><span><i style="background:var(--line)"></i>Unit ability</span></div>
@@ -2482,6 +2493,9 @@ function closeDsModal(fromPop){const m=document.getElementById("dsm");if(!m||m.h
   if(DSM.from&&DSM.from.isConnected)DSM.from.focus({preventScroll:true});}
 addEventListener("popstate",()=>closeDsModal(true));
 addEventListener("keydown",e=>{if(e.key==="Escape")closeDsModal();});
+
+/* keep sticky offsets in step with the header height */
+(()=>{const h=document.querySelector("header.top");if(!h)return;const set=()=>document.documentElement.style.setProperty("--hh",h.offsetHeight+"px");set();try{new ResizeObserver(set).observe(h);}catch(e){addEventListener("resize",set);}})();
 
 /* ---------- standalone cloud (Supabase): invite-only login, one private row per person ---------- */
 (function(){
