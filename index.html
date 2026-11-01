@@ -1879,7 +1879,7 @@ function paintKeys(P){const fs=facSlugs(P)[0];if(!fs||!AIART.url||false)return n
 function paintInfo(){if(!(typeof AIART!=="undefined"&&AIART.url))return null;try{const P=parseList((LISTS.lists.find(x=>x.id===LISTS.active)||{}).raw||"");const o=paintKeys(P);if(!o||!o.ks.length)return null;
   const done=o.ks.filter(k=>AIART.ready[k+"|"+JSON.stringify(o.fac||{})]).length;return {total:o.ks.length,left:o.ks.length-done,lab:o.lab,busy:AIART.q.length+AIART.run};}catch(e){return null;}}
 function paintAll(btn){const P=parseList((LISTS.lists.find(x=>x.id===LISTS.active)||{}).raw||""),o=paintKeys(P);if(!o)return;btn.disabled=true;
-  GENCTX.fac=o.fac;try{o.ks.forEach(k=>{try{genArtFor(k);}catch(e){}});}finally{GENCTX.fac=null;}
+  GENCTX.fac=o.fac;try{o.ks.slice(0,80).forEach(k=>{try{genArtFor(k);}catch(e){}});}finally{GENCTX.fac=null;}
   const tick=setInterval(()=>{if(document.body.dataset.view!=="list"||(!AIART.q.length&&!AIART.run)){clearInterval(tick);}
   try{renderStatus();}catch(e){}},3000);}
 function aiPanel(){
@@ -1901,7 +1901,7 @@ function aiPanel(){
   if(!AIBUSY&&OWNER&&SYNC&&MCP&&(tn||qn||(SYNC.art&&artLeft)))h+=`<div class="row"><button class="btn" id="syncNow">Sync now</button>${desk&&(tn||qn)?`<button class="btn" id="aiText">Add wording here instead</button>`:""}</div>`;
   else if(!AIBUSY&&desk&&(tn||qn))h+=`<div class="row"><button class="btn pri" id="aiText">Add the wording</button></div>`;
   if(typeof AIART!=="undefined"&&AIART.err&&AIART.url)h+=`<h4 class="arth">Art worker problem</h4><p class="note">${esc(AIART.err)}. Painted art can't be made until this clears, so the pixel art stays. If it mentions a limit it usually resets by the next day.</p>`;
-  if(pa)h+=`<h4 class="arth">Painted art</h4><p class="note">${pa.left?`${pa.left} of ${pa.total} ${esc(pa.lab)} units still to paint. They are saved on this phone once made.`:`All ${pa.total} ${esc(pa.lab)} units are painted and saved on this phone.`}</p>${pa.left&&!pa.busy?`<div class="row"><button class="btn pri" id="paintAll">Paint all ${esc(pa.lab)} art</button></div>`:pa.busy?`<p class="note">Painting… ${pa.busy} to go. Keep this open.</p>`:""}`;
+  if(pa)h+=`<h4 class="arth">Painted art</h4><p class="note">${pa.left?`${pa.left} of ${pa.total} ${esc(pa.lab)} units still to paint. They are saved on this phone once made. The free daily allowance covers roughly 100 pictures, so Paint all does 80 at a time; tap again tomorrow for the rest.`:`All ${pa.total} ${esc(pa.lab)} units are painted and saved on this phone.`}</p>${pa.left&&!pa.busy?`<div class="row"><button class="btn pri" id="paintAll">Paint all ${esc(pa.lab)} art</button></div>`:pa.busy?`<p class="note">Painting… ${pa.busy} to go. Keep this open.</p>`:""}`;
   if(SYNCSTATE)h+=`<p class="note syncmsg">${esc(SYNCSTATE)}</p>`;
   return h+`</div>`;
 }
