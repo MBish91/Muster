@@ -2425,7 +2425,8 @@ function applyTxt(){
     F.armyRules=(F.armyRules||[]).map(r=>({name:r.name,text:r.text||by[nrm(r.name)]||""}));
     const th="f-"+slug(F.label);if(FACTIONS[th])FACTIONS[th].army=F.armyRules.map(r=>[r.name,r.text]);});
 }
-async function seedTxt(){if(seedTxt.done)return;seedTxt.done=1;for(const f of ["txt_sm","txt_necrons"]){try{const r=await fetch("data/"+f+".json");if(r.ok)(await r.json()).forEach(d=>{const k=qid(d.kind,d.name);if(!TXT[k])TXT[k]=d;});}catch(e){}}}
+const TXTFILES=["txt_sm","txt_necrons","txt_adeptus-custodes"];
+async function seedTxt(){if(seedTxt.done)return;seedTxt.done=1;for(const f of TXTFILES){try{const r=await fetch("data/"+f+".json");if(r.ok)(await r.json()).forEach(d=>{const k=qid(d.kind,d.name);if(!TXT[k])TXT[k]=d;});}catch(e){}}}
 async function loadTxt(){await seedTxt();if(!DB){applyTxt();return;}try{const q=await DB.collection("txt").get();q.docs.forEach(d=>{const v=d.data();if(v)TXT[d.id]=v;});}catch(e){}
   try{const c=await DB.collection("cfg").doc("sync").get();const v=c&&(c.data?c.data():c);PAUSED=!!(v&&v.paused);if(v&&v.trigger&&!PAUSED)SYNC=v;}catch(e){}
   applyTxt();}
