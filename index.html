@@ -2385,7 +2385,7 @@ async function ensureData(P){
   const fs=facSlugs(P);await Promise.all(fs.map(whLoad));
   const miss=P.units.filter(u=>!resolved(u));
   if(miss.length){const idx=await whIndex();const extra=[...new Set(miss.flatMap(u=>idx[nrmIdx(u.name)]||[]))].filter(s=>!WH.loaded[s]);await Promise.all(extra.map(whLoad));}
-  const label=P.factions[P.factions.length-1]||"",d=fs.length&&WH.bySlug[fs[0]];
+  const d=fs.length&&WH.bySlug[fs[0]],label=P.factions.find(f=>fs.length&&slug(f)===fs[0])||P.factions[P.factions.length-1]||"";
   if(label&&d&&facOf(P)==="other")applyFac({label,factions:P.factions,armyRules:(d.army||[]).map(n=>({name:n,text:""})),colors:{header:shade(d.colors.header,-.45),stripe:d.colors.stripe,accent:"#e9dccb"},wh:true});
   await seedTxt();applyTxt();
 }
@@ -2425,7 +2425,7 @@ function applyTxt(){
     F.armyRules=(F.armyRules||[]).map(r=>({name:r.name,text:r.text||by[nrm(r.name)]||""}));
     const th="f-"+slug(F.label);if(FACTIONS[th])FACTIONS[th].army=F.armyRules.map(r=>[r.name,r.text]);});
 }
-async function seedTxt(){if(seedTxt.done)return;seedTxt.done=1;try{const r=await fetch("data/txt_sm.json");if(r.ok)(await r.json()).forEach(d=>{const k=qid(d.kind,d.name);if(!TXT[k])TXT[k]=d;});}catch(e){}}
+async function seedTxt(){if(seedTxt.done)return;seedTxt.done=1;for(const f of ["txt_sm","txt_necrons"]){try{const r=await fetch("data/"+f+".json");if(r.ok)(await r.json()).forEach(d=>{const k=qid(d.kind,d.name);if(!TXT[k])TXT[k]=d;});}catch(e){}}}
 async function loadTxt(){await seedTxt();if(!DB){applyTxt();return;}try{const q=await DB.collection("txt").get();q.docs.forEach(d=>{const v=d.data();if(v)TXT[d.id]=v;});}catch(e){}
   try{const c=await DB.collection("cfg").doc("sync").get();const v=c&&(c.data?c.data():c);PAUSED=!!(v&&v.paused);if(v&&v.trigger&&!PAUSED)SYNC=v;}catch(e){}
   applyTxt();}
