@@ -806,7 +806,7 @@ function parseList(raw){
   out.name=t[1].trim();out.pts=+t[2].replace(/,/g,"");i++;
   const hdr=[];
   const isSect=s=>/^[A-Z][A-Z0-9 '’\-&]+$/.test(s.trim())&&s.trim().length>2&&!/^\s/.test(s);
-  while(i<L.length&&!isSect(L[i])&&!/^Attached unit \d+/.test(L[i].trim())){if(L[i].trim())hdr.push(L[i].trim());i++;}
+  while(i<L.length&&!isSect(L[i])&&!/^Attached units?\b/i.test(L[i].trim())){if(L[i].trim())hdr.push(L[i].trim());i++;}
   const di=hdr.findIndex(h=>/Detachment Point/i.test(h));
   if(di>=0){out.factions=hdr.slice(0,di);out.dets=hdr[di].replace(/\s*\(\d+\s*Detachment Points?\)\s*$/i,"").split(/,\s*|\s+and\s+/).map(s=>s.trim()).filter(Boolean);
     hdr.slice(di+1).forEach(h=>{if(/Points?\)/i.test(h))out.size=h;else if(!out.mission)out.mission=h;});}
@@ -816,12 +816,15 @@ function parseList(raw){
     const ln=L[i];if(!ln.trim())continue;
     if(/^Exported with/i.test(ln.trim()))break;
     if(isSect(ln)){grp=ln.trim().toLowerCase().replace(/^\w/,c=>c.toUpperCase());if(!/attached/i.test(grp))att=0;cur=null;continue;}
-    if(/^Attached unit \d+/.test(ln.trim())){att++;cur=null;continue;}
+    if(/^Attached units$/i.test(ln.trim())){grp="Attached units";cur=null;continue;}
+    if(/^Attached unit \d+/i.test(ln.trim())){att++;grp=/attached/i.test(grp)?grp:"Attached units";cur=null;continue;}
     const u=!/^\s/.test(ln)&&ln.trim().match(/^(.*?)\s*\(([\d,]+)\s*Points?\)\s*$/i);
     if(u){cur={name:u[1].trim(),pts:+u[2].replace(/,/g,""),grp,att:/attached/i.test(grp)?att:0,role:"",warlord:false,enh:"",items:[],misc:[]};out.units.push(cur);continue;}
     if(!cur)continue;
-    const lvl2=/^\s*◦/.test(ln),txt=ln.replace(/^\s*[•◦\-*]\s*/,"").trim();
-    if(lvl2){const it=cur.items[cur.items.length-1],m=txt.match(/^(\d+)x\s+(.+)$/);if(it&&m)it.sub.push({n:+m[1],name:m[2].trim()});continue;}
+    const bullet=/^\s*[•◦\-*]/.test(ln),ind=ln.match(/^\s*/)[0].length,txt=ln.replace(/^\s*[•◦\-*]\s*/,"").trim(),isN=/^\d+x\s/.test(txt);
+    const lvl2=/^\s*◦/.test(ln)||(isN&&cur.items.length&&(bullet?(cur.topInd!=null&&ind>cur.topInd):cur.lastSub));
+    if(lvl2){const it=cur.items[cur.items.length-1],m=txt.match(/^(\d+)x\s+(.+)$/);if(it&&m)it.sub.push({n:+m[1],name:m[2].trim()});cur.lastSub=true;continue;}
+    if(isN){if(bullet&&cur.topInd==null)cur.topInd=ind;cur.lastSub=false;}
     let m;
     if((m=txt.match(/^Attached as:\s*(.+)$/i)))cur.role=m[1].replace(/\s*\(.*\)$/,"").trim();
     else if(/^Warlord$/i.test(txt))cur.warlord=true;
