@@ -1660,6 +1660,13 @@ function renderPhases(animate){
 function renderGbar(){const g=document.getElementById("gbar");if(!g)return;g.innerHTML=`<span class="g">Round<button data-rd="${Math.max(1,S.round-1)}" aria-label="Previous round">‹</button><b>${S.round}</b><button data-rd="${Math.min(5,S.round+1)}" aria-label="Next round">›</button></span><span class="g">CP<button data-act="cp-" aria-label="Remove 1 CP">−</button><b>${S.cp}</b><button data-act="cp+" aria-label="Add 1 CP">+</button></span>`;}
 function renderAll(){renderGbar();renderArmy();renderPhases();renderStrats();renderBattle();renderRules();}
 
+/* wound tracker: key includes the maximum so a changed Wounds total (e.g. Shield Drone) never shows a stale count */
+function wounds(uid,i,qty,w,dmg){
+  const max=qty*w,id=uid+"-"+i+"-"+max,cur=S.wounds[id]??max,m=Math.ceil(cur/w),dm=dmg&&cur>0&&cur<=dmg.at;
+  return `<div class="wounds ${cur===0?"dead":""}"><div class="wl"><b>${cur} / ${max} wounds</b>${dm?'<span class="dmgtag">DAMAGED</span>':""}<small>${cur===0?"Destroyed":dm?dmg.txt:qty>1?`${m} of ${qty} models remaining`:"Single model"}</small><div class="bar"><i data-b="${id}" style="width:${max?cur/max*100:0}%"></i></div></div>
+  <button class="sq" aria-label="Remove a wound" data-w="${id}" data-d="-1" data-max="${max}">−</button><button class="sq" aria-label="Restore a wound" data-w="${id}" data-d="1" data-max="${max}">+</button></div>`;
+}
+
 /* ---------- instant generated art: original vector figures drawn in code, tinted by the army's colours ---------- */
 const GEN={cache:{}};const GENCTX={fac:null};
 const CHCOL={"black templars":["#0d0d10","#b3202a"],"world eaters":["#7a1414","#c9a64a"],"t'au empire":["#c98a3a","#e8e2d2"],"tau empire":["#c98a3a","#e8e2d2"],"adeptus custodes":["#c9a02e","#a51c1c"],"chaos knights":["#3a2a2a","#b8862e"],
