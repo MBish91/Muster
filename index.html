@@ -636,7 +636,18 @@ header.top{position:sticky}
 .dsm-b{touch-action:pan-y;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .dsm-b .ds{border-top:0;padding:14px 16px 24px}
 .dsm-b .dshead{display:none}
-html.dsm-lock,html.dsm-lock body{overflow:hidden;overscroll-behavior:none}#dsm{overscroll-behavior:none;touch-action:none;will-change:opacity}
+html.dsm-lock,html.dsm-lock body{overflow:hidden;overscroll-behavior:none}/* UX pass */
+#strats .cpline{display:none}
+.uhead .nm b{white-space:normal!important;display:-webkit-box!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.legend{gap:4px 12px!important;font-size:11.5px!important;margin-bottom:var(--s2)!important}
+#gbar{padding:3px var(--s2) 5px!important}
+#gbar button{height:30px!important;width:38px!important}
+#gbar .g b{font-size:18px!important}
+.tabs button{padding-top:9px!important;padding-bottom:9px!important}
+button:active,summary:active,.chip:active,.kwt:active{transition:transform .08s}
+button:not(#dsmX):active{transform:scale(.96)}
+#dsm{overscroll-behavior:none}
+#dsm{overscroll-behavior:none;touch-action:none;will-change:opacity}
 
 /* safe areas for installed app */
 :root{padding-top:0!important}
@@ -2700,6 +2711,10 @@ addEventListener("keydown",e=>{if(e.key==="Escape")closeDsModal();});
 /* keep sticky offsets in step with the header height */
 (()=>{const h=document.querySelector("header.top");if(!h)return;const set=()=>document.documentElement.style.setProperty("--hh",h.offsetHeight+"px");set();try{new ResizeObserver(set).observe(h);}catch(e){addEventListener("resize",set);}})();
 (()=>{const r=document.documentElement;if(r.dataset.theme!=="light")r.dataset.theme="dark";const mc=document.querySelector('meta[name="theme-color"]');if(mc)mc.content=r.dataset.theme==="light"?"#eef2f7":"#05070b";})();
+
+/* keep the screen awake while a list is open */
+(()=>{let wl=null;async function lock(){try{if(!navigator.wakeLock||document.visibilityState!=="visible"||LISTS.view!=="list"||wl)return;wl=await navigator.wakeLock.request("screen");wl.addEventListener("release",()=>{wl=null;});}catch(e){wl=null;}}
+document.addEventListener("visibilitychange",lock);document.addEventListener("click",()=>setTimeout(lock,300),true);document.addEventListener("touchstart",lock,{passive:true,once:true});})();
 
 /* ---------- standalone cloud (Supabase): invite-only login, one private row per person ---------- */
 (function(){
