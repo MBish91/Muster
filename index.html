@@ -1431,6 +1431,18 @@ let LISTS={lists:[],active:null};
 try{const r=localStorage.getItem(LKEY);if(r)LISTS=JSON.parse(r);}catch(e){}
 const saveLists=()=>{try{localStorage.setItem(LKEY,JSON.stringify(LISTS));}catch(e){}if(window.__cloudSave)window.__cloudSave();};
 if(!LISTS.lists.length){LISTS.lists=[{id:"s1",raw:SAMPLE_TERMIN,sample:1},{id:"s2",raw:SAMPLE_TAU,sample:1}];LISTS.active="s1";saveLists();}
+const CORE_STRATS=[
+["command-re-roll","Command Re-roll",1,"Any phase, right after you make an Advance, charge, damage, Hazard, hit, save or wound roll, or a roll to determine the number of attacks","That unit or model","Re-roll that roll. If you rolled several dice together, pick one to re-roll. Charge rolls must be re-rolled in full."],
+["insane-bravery","Insane Bravery",1,"Battle-shock step of your Command phase, just before you make a battle-shock roll for a friendly unit","That unit","That battle-shock roll is automatically successful. Once per battle."],
+["fire-overwatch","Fire Overwatch",1,"End of your opponent's Movement phase","One friendly unengaged unit (not TITANIC)","The unit shoots using snap shooting."],
+["rapid-ingress","Rapid Ingress",1,"End of your opponent's Movement phase","One friendly unit in strategic reserves (not AIRCRAFT)","The unit makes an ingress move. Cannot be used in the first battle round."],
+["explosives","Explosives",1,"Your Shooting phase","One friendly unengaged EXPLOSIVES/GRENADES unit that is eligible to shoot and did not Advance this turn","Pick one EXPLOSIVES/GRENADES model in the unit, then one unengaged enemy unit within 8\" of it and visible to it. Roll six D6: each 4+ inflicts 1 mortal wound on that enemy unit."],
+["smokescreen","Smokescreen",1,"Start of your opponent's Shooting phase","One friendly SMOKE unit","Until end of phase, each time an attack targets your SMOKE unit, or a unit that is not fully visible to the attacker because of models in your SMOKE unit, the target has the benefit of cover against that attack."],
+["crushing-impact","Crushing Impact",1,"Your Charge phase, just after a friendly MONSTER/VEHICLE unit ends a charge move","That MONSTER/VEHICLE unit","Pick one enemy unit engaged with it, then one model in your unit engaged with that enemy. Roll D6 equal to that model's Toughness: each 1 inflicts 1 mortal wound on your unit; each 5+ inflicts 1 mortal wound on the enemy unit (max 6 per enemy unit)."],
+["heroic-intervention","Heroic Intervention",1,"End of your opponent's Charge phase","One friendly unengaged unit within 12\" of enemy units (a VEHICLE only if it is a CHARACTER or WALKER)","Resolve a charge with the unit, choosing a mode first. Leap to Defend (costs +1CP): can only target enemy units that made a charge move this phase and are within range. Into the Fray: a charge roll above 6 counts as 6, and you can target any enemy within 6\" of your unit and within range."],
+["epic-challenge","Epic Challenge",1,"Fight phase, just after a friendly CHARACTER unit is selected to fight","That CHARACTER unit","Pick one CHARACTER model in the unit. Until end of phase its melee weapons have PRECISION."],
+["counteroffensive","Counteroffensive",2,"Fight step of your opponent's Fight phase, just after an enemy unit has resolved its attacks","One friendly unit eligible to fight","Until end of phase the unit has Fights First and must be the next unit selected to fight."]
+].map(a=>({id:"core-"+a[0],det:"Core",n:a[1],cp:a[2],when:a[3],target:a[4],effect:a[5],wh:true}));
 let KEY="wh-army-state-x",S,UNITS=[],STRATS=[],DETS=[],META={},REPORT={};
 const blank=()=>({cp:0,round:1,doc:{assault:0,devastator:0,tactical:0},active:"",wounds:{},used:{},myStrats:[],stratFilter:"All",notes:"",phase:"cmd"});
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}};
@@ -1444,7 +1456,7 @@ function loadList(id){
   UNITS=A.units;META={name:P.name,pts:P.pts,factions:P.factions,dets:P.dets,mission:P.mission,size:P.size,fac:facOf(P)};
   const dk=P.dets.map(d=>DETR[nrm(d)]?DETR[nrm(d)].n:d);
   DETS=[...dk,"Core"];
-  STRATS=STRATLIB.filter(s=>dk.some(d=>nrm(d)===nrm(s.det)));
+  STRATS=[...STRATLIB.filter(s=>dk.some(d=>nrm(d)===nrm(s.det))),...CORE_STRATS];
   const enhMissing=[];UNITS.forEach(u=>u.parts.forEach(p=>{if(p.enh&&!enhFind(p.enh))enhMissing.push(p.enh);}));
   REPORT={missing:A.missing,issues:P.issues,detMissing:P.dets.filter(d=>!DETR[nrm(d)]),enhMissing,count:P.units.length};
   KEY="wh-army-state-"+L.id;S=blank();try{const r=localStorage.getItem(KEY);if(r)S=Object.assign(blank(),JSON.parse(r));}catch(e){}
